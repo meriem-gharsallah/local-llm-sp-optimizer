@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  # Service LLM (Ollama)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama-sp-optimizer
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+
+  # Service SQL Server (optionnel, si tu veux conteneuriser aussi)
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver-sp-optimizer
+    ports:
+      - "1433:1433"
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
+      MSSQL_PID: "Developer"
+    restart: unless-stopped
+
+  # Ton application Python (à conteneuriser plus tard)
+  # app:
+  #   build: .
+  #   depends_on:
+  #     - ollama
+  #     - sqlserver
+
+volumes:
+  ollama_data:

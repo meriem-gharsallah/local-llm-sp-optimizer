@@ -1,0 +1,57 @@
+# Environnement virtuel
+.venv/
+venv/
+env/
+ENV/
+
+# Docker
+data/raw/
+data/processed/
+output/
+
+# Variables d'environnement (secrets)
+.env
+
+# Fichiers Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Bases de données locales
+*.db
+*.sqlite
+*.sqlite3
+
+# Fichiers temporaires
+*.tmp
+temp/
+*.bak
+
+# Ollama (modèles trop gros pour Git)
+.ollama/
+
+# Docker
+docker-compose.override.yml
+
+# Rapports générés
+*.html
+*.pdf
+
+# OS
+.DS_Store
+Thumbs.db

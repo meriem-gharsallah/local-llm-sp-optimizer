@@ -1,0 +1,11 @@
+# Connexion SQL Server (optionnel pour tester Ollama, mais on l'installe)
+pyodbc>=4.0.39
+
+# Appel à Ollama (indispensable pour tester)
+requests>=2.31.0
+
+# Variables d'environnement
+python-dotenv>=1.0.0
+
+# Pour manipuler les données plus tard
+pandas>=2.0.0
