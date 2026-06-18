@@ -1,0 +1,17 @@
+    {# 
+    Template Jinja2 pour l'analyse des procédures stockées
+    Variables disponibles:
+    - procedure_name: nom de la procédure
+    - procedure_code: code SQL de la procédure
+    - stats: statistiques d'exécution (execution_count, avg_duration_ms, avg_cpu_ms, avg_logical_reads)
+    - plan_text: plan d'exécution digéré
+    - indexes_text: index existants formatés
+    - rules_code: règles SQL déterministes
+    - rules_md: règles métier du fichier docs/regles_metier.md
+#}
+Tu es un expert SQL Server. Analyse la procédure stockée suivante et propose une optimisation.
+
+PROCEDURE : {{ procedure_name }}
+CODE SQL :
+```sql
+{{ procedure_code }}
