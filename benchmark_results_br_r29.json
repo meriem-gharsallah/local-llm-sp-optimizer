@@ -1,0 +1,84 @@
+{
+  "sp_name": "BR_R29_VIB_WB_3",
+  "optimized_sp": "BR_R29_VIB_WB_3_Optimized",
+  "test_params": [
+    {
+      "@transaction_id": "104",
+      "@userid": "7",
+      "@rulecode": "'R29'"
+    },
+    {
+      "@transaction_id": "105",
+      "@userid": "8",
+      "@rulecode": "'R30'"
+    }
+  ],
+  "iterations": 3,
+  "results": [
+    {
+      "params": {
+        "@transaction_id": "104",
+        "@userid": "7",
+        "@rulecode": "'R29'"
+      },
+      "original": {
+        "durations_ms": [
+          1502.3590000346303,
+          747.279700008221,
+          795.6151999533176
+        ],
+        "avg_ms": 1015.08,
+        "min_ms": 747.28,
+        "max_ms": 1502.36,
+        "iterations": 3,
+        "rows": 1
+      },
+      "optimized": {
+        "durations_ms": [
+          44.54570007510483,
+          5.8457000413909554,
+          3.1540999189019203
+        ],
+        "avg_ms": 17.85,
+        "min_ms": 3.15,
+        "max_ms": 44.55,
+        "iterations": 3,
+        "rows": 1
+      },
+      "gain_percent": 98.2
+    },
+    {
+      "params": {
+        "@transaction_id": "105",
+        "@userid": "8",
+        "@rulecode": "'R30'"
+      },
+      "original": {
+        "durations_ms": [
+          734.4176000915468,
+          741.5837000589818,
+          677.5866999523714
+        ],
+        "avg_ms": 717.86,
+        "min_ms": 677.59,
+        "max_ms": 741.58,
+        "iterations": 3,
+        "rows": 0
+      },
+      "optimized": {
+        "durations_ms": [
+          8.260199916549027,
+          2.4745999835431576,
+          1.9981999648734927
+        ],
+        "avg_ms": 4.24,
+        "min_ms": 2.0,
+        "max_ms": 8.26,
+        "iterations": 3,
+        "rows": 1
+      },
+      "gain_percent": 99.4
+    }
+  ],
+  "optimized_code": "\nCREATE PROCEDURE [dbo].[BR_R29_VIB_WB_3_Optimized]\n(\n      @transaction_id INT,\n      @userid INT,\n      @rulecode NVARCHAR(20)\n)\nAS\nBEGIN\n    SET NOCOUNT ON;\n\n    -- Table temporaire pour stocker les résultats\n    DECLARE @Result TABLE (\n        var_value NVARCHAR(MAX),\n        var_type NVARCHAR(50)\n    );\n\n    -- Variables pour optimiser les accès\n    DECLARE @existing_var_value NVARCHAR(MAX);\n    DECLARE @existing_var_type NVARCHAR(50);\n\n    -- Récupérer les données existantes en une seule requête\n    -- Utilisation de TOP 1 avec NOLOCK pour éviter les blocages\n    SELECT TOP 1 \n        @existing_var_value = var_value,\n        @existing_var_type = var_type\n    FROM approval_var_log WITH (NOLOCK)\n    WHERE item = 'transaction'\n      AND item_id = @transaction_id\n      AND var_name = 'WB_Approval_Matrix'\n      AND ddate IS NULL\n    ORDER BY idate DESC;\n\n    -- Si des données existent, les utiliser\n    IF @existing_var_value IS NOT NULL\n    BEGIN\n        INSERT INTO @Result (var_value, var_type)\n        SELECT @existing_var_value, @existing_var_type;\n    END\n    ELSE\n    BEGIN\n        -- Sinon, récupérer les valeurs par défaut depuis classification\n        -- Adaptez cette partie selon votre logique métier réelle\n        INSERT INTO @Result (var_value, var_type)\n        SELECT \n            ISNULL(c.classification_name, 'Default_Value'),\n            'Default_Type'\n        FROM classification c WITH (NOLOCK)\n        WHERE c.classification_id = @transaction_id\n           OR EXISTS (\n               SELECT 1 \n               FROM eligibility_rule er WITH (NOLOCK)\n               WHERE er.transaction_id = @transaction_id\n                 AND er.constant_matrix_id = c.classification_id\n           );\n        \n        -- Si aucune donnée trouvée, insérer des valeurs par défaut\n        IF @@ROWCOUNT = 0\n        BEGIN\n            INSERT INTO @Result (var_value, var_type)\n            SELECT 'Default_Value', 'Default_Type';\n        END\n    END\n\n    -- Mettre à jour les enregistrements existants\n    UPDATE approval_var_log\n    SET \n        var_value = r.var_value,\n        var_type = r.var_type,\n        uuser = @userid,\n        udate = GETDATE()\n    FROM approval_var_log avl\n    INNER JOIN @Result r ON 1=1\n    WHERE avl.item = 'transaction'\n      AND avl.item_id = @transaction_id\n      AND avl.var_name = 'WB_Approval_Matrix'\n      AND avl.ddate IS NULL;\n\n    -- Insérer un nouvel enregistrement (si aucun existant)\n    INSERT INTO approval_var_log(\n        item,\n        item_id,\n        var_name,\n        var_value,\n        var_type,\n        iuser,\n        idate,\n        entity,\n        wf_name,\n        internal_entity_id,\n        internal_segment_id\n    )\n    SELECT \n        'transaction',\n        @transaction_id,\n        'WB_Approval_Matrix',\n        r.var_value,\n        r.var_type,\n        @userid,\n        GETDATE(),\n        NULL,  -- entity\n        NULL,  -- wf_name\n        NULL,  -- internal_entity_id\n        NULL   -- internal_segment_id\n    FROM @Result r\n    WHERE NOT EXISTS (\n        SELECT 1 \n        FROM approval_var_log avl\n        WHERE avl.item = 'transaction'\n          AND avl.item_id = @transaction_id\n          AND avl.var_name = 'WB_Approval_Matrix'\n          AND avl.ddate IS NULL\n    );\n\n    -- Retourner les résultats avec les bons noms de colonnes\n    SELECT \n        r.var_value AS Authority,\n        r.var_type AS CMID\n    FROM @Result r;\n\nEND;\n"
+}

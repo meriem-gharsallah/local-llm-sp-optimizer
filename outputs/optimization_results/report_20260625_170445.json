@@ -1,0 +1,27 @@
+{
+  "timestamp": "2026-06-25T17:04:45.764929",
+  "total_duration_seconds": 1082.3333666324615,
+  "summary": {
+    "total": 1,
+    "success": 1,
+    "error": 0,
+    "skipped": 0
+  },
+  "results": [
+    {
+      "sp_name": "SearchAllTables",
+      "score": 75,
+      "execution_count": 7,
+      "avg_elapsed_ms": 112753.356,
+      "total_hours_wasted": 0.22,
+      "status": "success",
+      "diagnostic": "Extracted from markdown",
+      "optimized_code": "CREATE PROCEDURE usp_UpdateOrderStatus\n    @orderId INT,\n    @newStatus VARCHAR(50)\nAS\nBEGIN\n    SET NOCOUNT ON;\n\n    DECLARE @sql NVARCHAR(MAX) = 'UPDATE Orders SET Status = @newStatus WHERE OrderId = @orderId';\n    EXEC sp_executesql @sql, N'@orderId INT, @newStatus VARCHAR(50)', @orderId = @orderId, @newStatus = @newStatus;\nEND",
+      "explanation": "No explanation provided",
+      "estimated_gain": 50,
+      "risk": "MEDIUM",
+      "duration_seconds": 1082.3246445655823,
+      "error": ""
+    }
+  ]
+}

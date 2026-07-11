@@ -1,0 +1,25 @@
+{
+  "sp_name": "SP_VIB_DitributeMultiComboValues",
+  "timestamp": "2026-07-08T15:32:49.559473",
+  "model": "deepseek-coder:6.7b-instruct",
+  "status": "success",
+  "attempts": 2,
+  "diagnostic": "Extracted from markdown",
+  "optimized_code": "CREATE PROCEDURE [dbo].[SP_VIB_DitributeMultiComboValues] \n    @List NVARCHAR(MAX),\n    @MatriceShortname NVARCHAR(250)\nAS\nBEGIN\n    SET NOCOUNT ON;\n    \n    -- Create a temporary table to hold the result set.\n    CREATE TABLE #Table (\n        ID INT IDENTITY(1, 1),\n        flag NVARCHAR(200)\n    );\n\n    DECLARE @TableLIST TABLE (\n        RowRank INT IDENTITY(1, 1),\n        Fields NVARCHAR(200)\n    );\n    \n    -- Insert the values from the list into the temporary table.\n    INSERT INTO @TableLIST(Fields)\n    SELECT item \n    FROM [dbo].[SplitStringBySeparator](@List, ';');\n\n    -- Get all columns from the constant_matrix table and insert them into #Table.\n    WITH cte AS (\n        SELECT COLUMN_NAME, DATA_TYPE\n        FROM INFORMATION_SCHEMA.COLUMNS \n        WHERE TABLE_NAME = 'constant_matrix'\n    )\n    INSERT INTO #Table(flag)\n    SELECT CONCAT('orginal', ',', STRING_AGG(CONCAT(COLUMN_NAME, ' ', DATA_TYPE), ', '))\n    FROM cte;\n    \n    -- Insert the values from constant_matrix into #Table.\n    WITH cte AS (\n        SELECT COLUMN_NAME, DATA_TYPE\n        FROM INFORMATION_SCHEMA.COLUMNS \n        WHERE TABLE_NAME = 'constant_matrix' AND COLUMN_NAME IN (SELECT Fields FROM @TableLIST)\n    )\n    UPDATE #Table\n    SET flag = CONCAT('orginal', ',', STRING_AGG(CONCAT(COLUMN_NAME, ' ', DATA_TYPE), ', '))\n    FROM cte;\n    \n    -- Explode the multi-valued columns.\n    DECLARE @i INT = 1;\n    WHILE @i <= (SELECT COUNT(Fields) FROM @TableLIST)\n    BEGIN\n        DECLARE @colName NVARCHAR(200);\n        SET @colName = (SELECT Fields FROM @TableLIST WHERE RowRank = @i);\n        \n        -- Insert the values from constant_matrix into #TempTABLE.\n        INSERT INTO #Table(flag)\n        SELECT CONCAT((SELECT STRING_AGG(COLUMN_NAME, ', ') \n                       FROM INFORMATION_SCHEMA.COLUMNS \n                       WHERE TABLE_NAME = 'constant_matrix' AND COLUMN_NAME NOT IN (SELECT Fields FROM @TableLIST)), \n                      ',', @colName, ' ', DATA_TYPE)\n        FROM INFORMATION_SCHEMA.COLUMNS \n        WHERE TABLE_NAME = 'constant_matrix' AND COLUMN_NAME = @colName;\n        \n        SET @i = @i + 1;\n    END;\n    \n    -- Return the result set from #Table.\n    SELECT * FROM #Table;\nEND;",
+  "explanation": "No explanation provided",
+  "estimated_gain": 50,
+  "risk": "MEDIUM",
+  "validation_errors": [],
+  "original_stats": {
+    "sp_name": "SP_VIB_DitributeMultiComboValues",
+    "database_name": "AxeCredit",
+    "execution_count": 6,
+    "avg_elapsed_ms": 3600.839,
+    "avg_logical_reads": 1522002.0,
+    "avg_physical_reads": 69.0,
+    "avg_cpu_ms": 7187.174,
+    "total_elapsed_ms": 21605.036,
+    "last_execution_time": "2026-06-17 15:20:04.590000",
+    "captured_at": "2026-06-17 15:20:22.620000"
+  }
+}

@@ -1,5 +1,4 @@
-version: "3.8"
-
+# docker-compose.yml (sans la ligne version)
 services:
   # Service LLM (Ollama)
   ollama:
@@ -11,7 +10,7 @@ services:
       - ollama_data:/root/.ollama
     restart: unless-stopped
 
-  # Service SQL Server (optionnel, si tu veux conteneuriser aussi)
+  # Service SQL Server
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: sqlserver-sp-optimizer
@@ -19,16 +18,35 @@ services:
       - "1433:1433"
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStrong!Passw0rd}
       MSSQL_PID: "Developer"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
     restart: unless-stopped
 
-  # Ton application Python (à conteneuriser plus tard)
-  # app:
-  #   build: .
-  #   depends_on:
-  #     - ollama
-  #     - sqlserver
+  # Service ChromaDB - Base vectorielle
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: chromadb-sp-optimizer
+    ports:
+      - "8000:8000"
+    volumes:
+      - chromadb_data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
+      - ALLOW_RESET=TRUE
+      - CHROMA_SERVER_HOST=0.0.0.0
+      - CHROMA_SERVER_HTTP_PORT=8000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
 volumes:
   ollama_data:
+  sqlserver_data:
+  chromadb_data:

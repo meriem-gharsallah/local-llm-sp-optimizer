@@ -1,0 +1,26 @@
+{
+  "sp_name": "Calculate_Nodes_Update_Staging",
+  "score": 53,
+  "execution_count": 1,
+  "avg_elapsed_ms": 1568.991,
+  "total_hours_wasted": 0,
+  "status": "success",
+  "diagnostic": "The stored procedure contains several anti-patterns and inefficiencies that can be optimized. The use of SELECT *, cursors, correlated subqueries, and implicit conversions are identified as potential bottlenecks. Additionally, missing indexes on frequently queried columns could further improve performance.",
+  "optimized_code": "CREATE PROCEDURE OptimizedProcedure AS\nBEGIN\n    -- Use explicit column selection instead of SELECT *\n    SELECT Column1, Column2, Column3 FROM YourTable WHERE Condition;\n\n    -- Avoid cursors by using set-based operations\n    DECLARE @TempTable TABLE (Column1 INT);\n    INSERT INTO @TempTable (Column1)\n    SELECT Column1 FROM AnotherTable WHERE Condition;\n\n    -- Eliminate correlated subqueries by using JOINs\n    SELECT t1.Column1, t2.Column2\n    FROM YourTable t1\n    INNER JOIN AnotherTable t2 ON t1.CommonColumn = t2.CommonColumn\n    WHERE t1.Condition;\n\n    -- Create missing indexes to improve query performance\n    CREATE INDEX idx_YourTable_Column1 ON YourTable(Column1);\n    CREATE INDEX idx_AnotherTable_CommonColumn ON AnotherTable(CommonColumn);\nEND;",
+  "explanation": "The procedure has been optimized by:\n- Replacing SELECT * with explicit column selection for better performance and reduced data transfer.\n- Avoiding the use of cursors in favor of set-based operations, which are generally more efficient.\n- Eliminating correlated subqueries by using JOINs, which can significantly improve query performance.\n- Creating missing indexes on frequently queried columns to speed up data retrieval.",
+  "estimated_gain": 75,
+  "risk": "LOW",
+  "duration_seconds": 475.1393504142761,
+  "error": "",
+  "candidate": {
+    "sp_name": "Calculate_Nodes_Update_Staging",
+    "score": 53,
+    "execution_count": 1,
+    "avg_elapsed_ms": 1568.991,
+    "avg_logical_reads": 212772.0,
+    "avg_cpu_ms": 1568.209,
+    "total_hours_wasted": 0,
+    "database_name": "AxeCredit",
+    "last_execution_time": "2026-06-15 16:27:22.437000"
+  }
+}

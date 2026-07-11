@@ -1,0 +1,18 @@
+{
+  "sp_name": "SearchAllTables",
+  "optimized_sp": "SearchAllTables_Optimized",
+  "test_params": [
+    {
+      "@SearchStr": "'202009'"
+    },
+    {
+      "@SearchStr": "'test'"
+    },
+    {
+      "@SearchStr": "'error'"
+    }
+  ],
+  "iterations": 3,
+  "results": [],
+  "optimized_code": "\nCREATE PROCEDURE SearchAllTables_Optimized @SearchStr nvarchar(100)\nAS\nBEGIN\n    SET NOCOUNT ON;\n    DECLARE @Results TABLE(ColumnName nvarchar(370), ColumnValue nvarchar(3630))\n    DECLARE @TableName nvarchar(256), @SchemaName nvarchar(256), @ColumnName nvarchar(128), @SearchStr2 nvarchar(110);\n    SET @SchemaName = 'dbo';\n    SET @SearchStr2 = QUOTENAME('%' + @SearchStr + '%', '''');\n    \n    WHILE @TableName IS NOT NULL\n    BEGIN\n        SELECT TOP 1 @TableName = name \n        FROM sys.tables \n        WHERE type_desc = 'USER_TABLE' \n            AND schema_id = SCHEMA_ID(@SchemaName) \n            AND name > ISNULL(@TableName, '') \n        ORDER BY name\n        \n        IF @TableName IS NOT NULL\n        BEGIN\n            DECLARE ColumnCursor CURSOR FOR \n            SELECT name FROM sys.columns \n            WHERE object_id = OBJECT_ID(@SchemaName + '.' + @TableName)\n            \n            OPEN ColumnCursor\n            FETCH NEXT FROM ColumnCursor INTO @ColumnName\n            \n            WHILE @@FETCH_STATUS = 0\n            BEGIN\n                INSERT INTO @Results\n                EXEC (\n                    'SELECT ''' + @SchemaName + '.' + @TableName + '.' + @ColumnName + ''', \n                    ISNULL(CAST(' + @ColumnName + ' AS NVARCHAR(3630)), '''') \n                    FROM ' + @SchemaName + '.' + @TableName + ' \n                    WHERE ' + @ColumnName + ' LIKE ' + @SearchStr2 \n                );\n                FETCH NEXT FROM ColumnCursor INTO @ColumnName\n            END\n            \n            CLOSE ColumnCursor\n            DEALLOCATE ColumnCursor\n        END\n    END\n    \n    SELECT TOP 1000 ColumnName, ColumnValue FROM @Results ORDER BY ColumnName\nEND\n"
+}

@@ -1,0 +1,42 @@
+{
+  "timestamp": "2026-07-02T14:57:57.308834",
+  "total_duration_seconds": 7720.006011962891,
+  "summary": {
+    "total": 2,
+    "success": 1,
+    "error": 1,
+    "skipped": 0
+  },
+  "results": [
+    {
+      "sp_name": "SearchAllTables",
+      "score": 75,
+      "execution_count": 7,
+      "avg_elapsed_ms": 112753.356,
+      "total_hours_wasted": 0.22,
+      "status": "success",
+      "diagnostic": "PRE-ANALYSIS:\n1. This procedure searches all columns of all tables for a given search string and returns the results.\n2. @SearchStr nvarchar(100)\n3. Yes — iterating over schema metadata to cover all tables is intentional by design.\n\nANTI-PATTERNS (ranked by impact):\n1. **Redundant INFORMATION_SCHEMA reads**: The procedure repeatedly queries INFORMATION_SCHEMA.TABLES and INFORMATION_SCHEMA.COLUMNS, which can be consolidated into a single batch using STRING_AGG.\n2. **Dynamic SQL without sp_executesql**: The dynamic SQL used to search each column is not parameterized, which prevents plan reuse and increases the risk of SQL injection.\n3. **PARSENAME misuse**: PARSENAME is used incorrectly to extract schema and table names from a fully qualified name.\n4. **Implicit conversions**: The use of QUOTENAME without explicit casting can lead to implicit conversions, which are generally avoided for performance reasons.",
+      "optimized_code": "CREATE PROC [dbo].[SearchAllTables]    --exec[dbo].[SearchAllTables]'202009' search all database\n(\n    @SearchStr nvarchar(100)\n)\nAS\nBEGIN\n\nDECLARE @Results TABLE(ColumnName nvarchar(370), ColumnValue nvarchar(3630))\n\nSET NOCOUNT ON\n\nDECLARE @TableName nvarchar(256), @ColumnName nvarchar(128), @SearchStr2 nvarchar(110)\nSET  @TableName = ''\nSET @SearchStr2 = QUOTENAME('%' + @SearchStr + '%','''')\n\nDECLARE @TableList NVARCHAR(MAX) = STRING_AGG(QUOTENAME(TABLE_SCHEMA) + '.' + QUOTENAME(TABLE_NAME), ', ')\nFROM    INFORMATION_SCHEMA.TABLES\nWHERE       TABLE_TYPE = 'BASE TABLE'\n    AND OBJECTPROPERTY(\n            OBJECT_ID(\n                QUOTENAME(TABLE_SCHEMA) + '.' + QUOTENAME(TABLE_NAME)\n                 ), 'IsMSShipped'\n                   ) = 0\n\nDECLARE @ColumnList NVARCHAR(MAX) = STRING_AGG(QUOTENAME(COLUMN_NAME), ', ')\nFROM    INFORMATION_SCHEMA.COLUMNS\nWHERE       TABLE_TYPE = 'BASE TABLE'\n    AND DATA_TYPE IN ('char', 'varchar', 'nchar', 'nvarchar')\n\nDECLARE @SQL NVARCHAR(MAX)\nSET @SQL = '\nINSERT INTO @Results (ColumnName, ColumnValue)\nSELECT ''' + @TableName + '.' + @ColumnName + ''', LEFT(' + @ColumnName + ', 3630) \nFROM ' + @TableList + ' (NOLOCK) ' +\n' WHERE ' + @ColumnList + ' LIKE ' + @SearchStr2\n\nEXEC sp_executesql @SQL, N'@Results TABLE(ColumnName nvarchar(370), ColumnValue nvarchar(3630))', @Results OUTPUT\n\nSELECT ColumnName, ColumnValue FROM @Results\nEND",
+      "explanation": "1. **Consolidated INFORMATION_SCHEMA reads**: The procedure now uses STRING_AGG to build a single batch of table and column names, reducing the number of metadata reads.\n2. **Parameterized dynamic SQL**: The dynamic SQL is parameterized using sp_executesql, which allows plan reuse and prevents SQL injection.\n3. **Corrected PARSENAME usage**: Removed the incorrect use of PARSENAME for extracting schema and table names.\n4. **Avoided implicit conversions**: Used QUOTENAME without explicit casting to avoid potential implicit conversions.",
+      "estimated_gain": 80,
+      "risk": "MEDIUM",
+      "duration_seconds": 4112.566991567612,
+      "error": ""
+    },
+    {
+      "sp_name": "FindMyData_String",
+      "score": 75,
+      "execution_count": 6,
+      "avg_elapsed_ms": 29923.898,
+      "total_hours_wasted": 0.05,
+      "status": "error",
+      "diagnostic": "",
+      "optimized_code": "",
+      "explanation": "",
+      "estimated_gain": 0,
+      "risk": "LOW",
+      "duration_seconds": 3606.345726251602,
+      "error": "Ollama did not respond after retries"
+    }
+  ]
+}

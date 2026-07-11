@@ -1,0 +1,26 @@
+{
+  "sp_name": "BR_R29_VIB_WB_3",
+  "score": 58,
+  "execution_count": 6,
+  "avg_elapsed_ms": 1252.029,
+  "total_hours_wasted": 0,
+  "status": "success",
+  "diagnostic": "Analysis complete",
+  "optimized_code": "",
+  "explanation": "",
+  "estimated_gain": 50,
+  "risk": "MEDIUM",
+  "duration_seconds": 407.15059542655945,
+  "error": "",
+  "candidate": {
+    "sp_name": "BR_R29_VIB_WB_3",
+    "score": 58,
+    "execution_count": 6,
+    "avg_elapsed_ms": 1252.029,
+    "avg_logical_reads": 285343.0,
+    "avg_cpu_ms": 2124.609,
+    "total_hours_wasted": 0,
+    "database_name": "AxeCredit",
+    "last_execution_time": "2026-06-17 15:20:11.493000"
+  }
+}

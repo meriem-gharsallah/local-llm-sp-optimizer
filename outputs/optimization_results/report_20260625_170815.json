@@ -1,0 +1,27 @@
+{
+  "timestamp": "2026-06-25T17:08:15.785487",
+  "total_duration_seconds": 6.083685398101807,
+  "summary": {
+    "total": 1,
+    "success": 0,
+    "error": 1,
+    "skipped": 0
+  },
+  "results": [
+    {
+      "sp_name": "SearchAllTables",
+      "score": 75,
+      "execution_count": 7,
+      "avg_elapsed_ms": 112753.356,
+      "total_hours_wasted": 0.22,
+      "status": "error",
+      "diagnostic": "",
+      "optimized_code": "",
+      "explanation": "",
+      "estimated_gain": 0,
+      "risk": "LOW",
+      "duration_seconds": 6.08083176612854,
+      "error": "Ollama did not respond after retries"
+    }
+  ]
+}

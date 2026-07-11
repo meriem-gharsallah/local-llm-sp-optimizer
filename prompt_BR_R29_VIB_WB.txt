@@ -1,0 +1,105 @@
+SQL Expert. Optimize this procedure.
+
+PROC: BR_R29_VIB_WB
+
+CODE:
+```sql
+-- FULL REWRITE: SAME LOGIC, CLEAN STRUCTURE
+-- R29 – WB Corporate Approver Distribution
+--  Exec [BR_R29_VIB_WB] '104', '7', 'R29'
+CREATE   PROCEDURE [dbo].[BR_R29_VIB_WB]
+(
+      @transaction_id INT,
+      @userid INT,
+      @rulecode NVARCHAR(20)
+)
+AS
+BEGIN
+
+... [truncated] ...
+
+Authority FROM @Result),
+                      var_type =(SELECT CMID FROM @Result)
+                  WHERE item='transaction'
+                    AND item_id=@transaction_id
+                    AND var_name='WB_Approval_Matrix'
+                    AND ddate IS NULL;
+            END
+
+            INSERT INTO approval_var_log(item, item_id, var_name, var_value, var_type, iuser, idate)
+            SELECT 'transaction', @transaction_id, 'WB_Approval_Matrix',
+                   Authority, CMID, @userid, GETDATE()
+            FROM @Result;
+      END
+
+      SELECT * FROM @Result;
+END
+
+```
+
+STATS: Exec:6 | Dur:1563ms | CPU:2351ms | Reads:291840
+
+PLAN:
+── PLAN D'EXÉCUTION (points chauds) ──
+Opérateurs coûteux :
+  • Table Insert sur [@ResultTable] — coût 25.0539 — ~1 lignes
+  • Table Insert sur [@ResultTable] — coût 25.0539 — ~1 lignes
+  • Compute Scalar sur [constant_matrix] — coût 25.0439 — ~1 lignes
+  • Top sur [constant_matrix] — coût 25.0439 — ~1 lignes
+  • Compute Scalar sur [constant_matrix] — coût 25.0439 — ~1 lignes
+Index manquants signalés par SQL Server :
+  • [constant_matrix] → colonnes : ? (EQUALITY), ? (EQUALITY), ? (INCLUDE)
+  • [constant_matrix] → colonnes : ? (EQUALITY), ? (EQUALITY), ? (EQUALITY), ? (EQUALITY), ? (INCLUDE), ? (INCLUDE), ? (INCLUDE)
+  • [constant_matrix] → colonnes : ? (EQUALITY), ? (EQUALITY), ? (INCLUDE), ? (INCLUDE)
+Warnings :
+  ⚠ Produit cartésien détecté (No Join Predicate)
+  ⚠ Conversion implicite sur TRY_CAST([t].[sub_transaction_shortname] AS int) → bloque les index
+  ⚠ Conversion implicite sur [t1].[transaction_id]=TRY_CAST([t].[sub_transaction_shortname] AS int) → bloque les index
+  ⚠ Conversion implicite sur TRY_CAST([sdt].[name_6] AS int) → bloque les index
+  ⚠ Conversion implicite sur TRY_CAST([avl].[var_type] AS int) → bloque les index
+  ⚠ Conversion implicite sur TRY_CAST([sdt].[name_6] AS int) → bloque les index
+  ⚠ Conversion implicite sur TRY_CAST([sdt].[name_6] AS int) → bloque les index
+  ⚠ Conversion implicite sur TRY_CAST([sdt].[name_6] AS int) → bloque les index
+  ⚠ Conversion implicite sur CONVERT_IMPLICIT(nvarchar(50),[Expr1019],0) → bloque les index
+  ⚠ Conversion implicite sur CONVERT_IMPLICIT(nvarchar(50),[CMID],0) → bloque les index
+Lignes estimées (racine) : 1.0
+INDEXES:
+  approval_var_log.IX_approval_var_log_item_id_var_name (NONCLUSTERED)
+  approval_var_log.PK_approval_var_log (CLUSTERED)
+  classification.IX_classification (NONCLUSTERED)
+  classification.PK_transaction_classification (CLUSTERED)
+  constant_matrix.PK_constant_matrix (CLUSTERED)
+  counterparty.IX_counterparty_external_reference (NONCLUSTERED)
+  counterparty.IX_counterparty_index (NONCLUSTERED)
+  counterparty.PK_counterparty (CLUSTERED)
+  ... +16 more
+
+TABLE SCHEMAS:
+  - approval_var_log: approval_var_log_id (int, NOT NULL), entity (nvarchar(100), NULL), item (nvarchar(50), NULL), item_id (int, NULL), wf_name (nvarchar(100), NULL), var_name (nvarchar(100), NULL), var_type (nvarchar(50), NULL), var_value (nvarchar(3000), NULL), internal_entity_id (int, NULL), internal_segment_id (int, NULL), iuser (int, NULL), idate (datetime, NULL), uuser (int, NULL), udate (datetime, NULL), duser (int, NULL), ddate (datetime, NULL)
+  - dbo: Unknown schema
+  - constant_matrix: constant_matrix_id (int, NOT NULL), constant_matrix_shortname (nvarchar(200), NOT NULL), criteria1_text (nvarchar(200), NULL), criteria1_decimal (decimal, NULL), criteria1_ccy (int, NULL), criteria1_table (nvarchar(200), NULL), criteria1_column (nvarchar(200), NULL), criteria2_text (nvarchar(200), NULL), criteria2_decimal (decimal, NULL), criteria2_ccy (int, NULL), criteria2_table (nvarchar(200), NULL), criteria2_column (nvarchar(200), NULL), criteria3_text (nvarchar(200), NULL), criteria3_decimal (decimal, NULL), criteria3_ccy (int, NULL), criteria3_table (nvarchar(200), NULL), criteria3_column (nvarchar(200), NULL), criteria4_text (nvarchar(200), NULL), criteria4_decimal (decimal, NULL), criteria4_ccy (int, NULL), criteria4_table (nvarchar(200), NULL), criteria4_column (nvarchar(200), NULL), criteria5_text (nvarchar(200), NULL), criteria5_decimal (decimal, NULL), criteria5_ccy (int, NULL), criteria5_table (nvarchar(200), NULL), criteria5_column (nvarchar(200), NULL), criteria6_text (nvarchar(200), NULL), criteria6_decimal (decimal, NULL), criteria6_ccy (int, NULL), criteria6_table (nvarchar(200), NULL), criteria6_column (nvarchar(200), NULL), criteria7_text (nvarchar(200), NULL), criteria7_decimal (decimal, NULL), criteria7_ccy (int, NULL), criteria7_table (nvarchar(200), NULL), criteria7_column (nvarchar(200), NULL), criteria8_text (nvarchar(200), NULL), criteria8_decimal (decimal, NULL), criteria8_ccy (int, NULL), criteria8_table (nvarchar(200), NULL), criteria8_column (nvarchar(200), NULL), criteria9_text (nvarchar(200), NULL), criteria9_decimal (decimal, NULL), criteria9_ccy (int, NULL), criteria9_table (nvarchar(200), NULL), criteria9_column (nvarchar(200), NULL), criteria10_text (nvarchar(200), NULL), criteria10_decimal (decimal, NULL), criteria10_ccy (int, NULL), criteria10_table (nvarchar(200), NULL), criteria10_column (nvarchar(200), NULL), value1_text (nvarchar(-1), NULL), value1_decimal (decimal, NULL), value1_ccy (int, NULL), value2_text (nvarchar(-1), NULL), value2_decimal (decimal, NULL), value2_ccy (int, NULL), value3_text (nvarchar(-1), NULL), value3_decimal (decimal, NULL), value3_ccy (int, NULL), value4_text (nvarchar(-1), NULL), value4_decimal (decimal, NULL), value4_ccy (int, NULL), value5_text (nvarchar(-1), NULL), value5_decimal (decimal, NULL), value5_ccy (int, NULL), iuser (int, NULL), idate (datetime, NULL), uuser (int, NULL), udate (datetime, NULL), duser (int, NULL), ddate (datetime, NULL), value6_text (nvarchar(-1), NULL), value6_decimal (decimal, NULL), value6_ccy (int, NULL), value7_text (nvarchar(-1), NULL), value7_decimal (decimal, NULL), value7_ccy (int, NULL), value8_text (nvarchar(-1), NULL), value8_decimal (decimal, NULL), value8_ccy (int, NULL), value9_text (nvarchar(-1), NULL), value9_decimal (decimal, NULL), value9_ccy (int, NULL), value10_text (nvarchar(-1), NULL), value10_decimal (decimal, NULL), value10_ccy (int, NULL), internal_entity_id (int, NULL), internal_segment_id (int, NULL), mc_status (nvarchar(50), NULL), mc_link_id (int, NULL), isactive (bit, NULL)
+  - SC: Unknown schema
+  - Excel: Unknown schema
+  - ONG: Unknown schema
+  - APP: Unknown schema
+  - static_data_table: static_data_table_id (int, NOT NULL), table_name (nvarchar(50), NOT NULL), shortname (nvarchar(50), NULL), name (nvarchar(200), NULL), internal_entity_id (int, NULL), internal_segment_id (int, NULL), iuser (int, NULL), idate (datetime, NULL), uuser (int, NULL), udate (datetime, NULL), ddate (datetime, NULL), duser (int, NULL), name_1 (nvarchar(200), NULL), name_2 (nvarchar(200), NULL), name_3 (nvarchar(200), NULL), name_4 (nvarchar(200), NULL), name_5 (nvarchar(200), NULL), name_6 (nvarchar(200), NULL), external_reference (nvarchar(100), NULL), mc_status (nvarchar(50), NULL), mc_link_id (int, NULL), isactive (bit, NULL), external_ref1 (nvarchar(200), NULL), external_ref2 (nvarchar(200), NULL), external_ref3 (nvarchar(200), NULL), external_ref4 (nvarchar(200), NULL), external_ref5 (nvarchar(200), NULL), external_ref6 (nvarchar(200), NULL), external_ref7 (nvarchar(200), NULL), external_ref8 (nvarchar(200), NULL), external_ref9 (nvarchar(200), NULL), external_ref10 (nvarchar(200), NULL), external_ref11 (nvarchar(200), NULL)
+  - classification: classification_id (int, NOT NULL), classification_shortname (nvarchar(50), NULL), classification_name (nvarchar(200), NULL), iuser (int, NULL), idate (datetime, NULL), uuser (int, NULL), udate (datetime, NULL), duser (int, NULL), ddate (datetime, NULL), classification_name_1 (nvarchar(200), NULL), classification_name_2 (nvarchar(200), NULL), classification_name_3 (nvarchar(200), NULL), classification_name_4 (nvarchar(200), NULL), classification_name_5 (nvarchar(200), NULL), classification_name_6 (nvarchar(200), NULL), mc_status (nvarchar(50), NULL), mc_link_id (int, NULL)
+  - transaction_cap: transaction_cap_id (int, NOT NULL), transaction_id (int, NOT NULL), cap_limit_type (nvarchar(50), NOT NULL), cap_limit_shortname (nvarchar(200), NULL), cap_limit_description (nvarchar(1000), NULL), transaction_type_id (int, NULL), limit_amount (decimal, NULL), limit_amount_ccy_id (int, NULL), direct_outstanding_amount (decimal, NULL), direct_outstanding_amount_ccy_id (int, NULL), indirect_outstanding_amount (decimal, NULL), indirect_outstanding_amount_ccy_id (int, NULL), direct_utilization_amount (decimal, NULL), direct_utilization_amount_ccy_id (int, NULL), indirect_utilization_amount (decimal, NULL), indirect_utilization_amount_ccy_id (int, NULL), direct_reserved_amount (decimal, NULL), direct_reserved_amount_ccy_id (int, NULL), indirect_reserved_amount (decimal, NULL), indirect_reserved_amount_ccy_id (int, NULL), available_amount (decimal, NULL), available_amount_ccy_id (int, NULL), iuser (int, NULL), idate (datetime, NULL), uuser (int, NULL), udate (datetime, NULL), duser (int, NULL), ddate (datetime, NULL), status_id (int, NULL), limit_tenor_interval_id (int, NULL), technical_limit_excess (bit, NULL), limit_amount_original (decimal, NULL), limit_amount_original_ccy_id (int, NULL), previous_notional_limit (decimal, NULL), previous_notional_limit_ccy_id (int, NULL), tenor (int, NULL), tenor_unit (nvarchar(50), NULL), internal_entity_id (int, NULL)
+  ... and 5 more tables
+RULES:
+1. 1. Correctness & Maintainability Rules BP-001
+2. 2. Query Performance Rules BP-010
+3. 3. Transactions & Concurrency Rules BP-030
+4. 4. Data Type Rules BP-040
+5. 5. Monitoring & Maintenance Rules BP-050
+6. 6. Rules for LLM-Generated or Automatically Rewritten SQL Th
+BASE: No LEFT→INNER | No SELECT * | No functions on columns
+
+INSTRUCTIONS:
+• Keep SAME functionality, parameters, scope
+• Do NOT invent tables/columns - use the TABLE SCHEMAS provided above
+• If cannot optimize safely, say so in diagnostic
+• Return COMPLETE CREATE PROCEDURE
+
+OUTPUT JSON:
+{"diagnostic":"...", "code_optimise":"CREATE PROC ...", "explication":"...", "gain_estime":75, "risque":"LOW"}

@@ -1,0 +1,27 @@
+{
+  "timestamp": "2026-06-25T15:27:46.580804",
+  "total_duration_seconds": 547.3035562038422,
+  "summary": {
+    "total": 1,
+    "success": 1,
+    "error": 0,
+    "skipped": 0
+  },
+  "results": [
+    {
+      "sp_name": "SearchAllTables",
+      "score": 75,
+      "execution_count": 7,
+      "avg_elapsed_ms": 112753.356,
+      "total_hours_wasted": 0.22,
+      "status": "success",
+      "diagnostic": "Analysis complete",
+      "optimized_code": "",
+      "explanation": "",
+      "estimated_gain": 50,
+      "risk": "MEDIUM",
+      "duration_seconds": 547.2908935546875,
+      "error": ""
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "timestamp": "2026-06-25T16:53:27.235177",
+  "total_duration_seconds": 3983.586728334427,
+  "summary": {
+    "total": 1,
+    "success": 1,
+    "error": 0,
+    "skipped": 0
+  },
+  "results": [
+    {
+      "sp_name": "SearchAllTables",
+      "score": 75,
+      "execution_count": 7,
+      "avg_elapsed_ms": 112753.356,
+      "total_hours_wasted": 0.22,
+      "status": "success",
+      "diagnostic": "Extracted from markdown",
+      "optimized_code": "CREATE PROCEDURE usp_UpdateOrderStatus\n    @OrderDate DATE,\n    @NewStatus NVARCHAR(50)\nAS\nBEGIN\n    SET NOCOUNT ON;\n\n    UPDATE Orders\n    SET Status = @NewStatus\n    WHERE OrderDate >= @OrderDate AND OrderDate < DATEADD(DAY, 1, @OrderDate);\nEND;",
+      "explanation": "No explanation provided",
+      "estimated_gain": 50,
+      "risk": "MEDIUM",
+      "duration_seconds": 3983.569680213928,
+      "error": ""
+    }
+  ]
+}

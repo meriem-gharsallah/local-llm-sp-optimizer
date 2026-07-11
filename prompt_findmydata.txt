@@ -1,0 +1,107 @@
+You are a SQL Server expert. Optimize this stored procedure.
+
+PROCEDURE: FindMyData_String
+
+SQL CODE:
+```sql
+-- SELECT * from static_data_table WHERE shortname= 'S'
+-- SELECT * from transaction_generic WHERE text_field2='M'
+-- SELECT * from static_data_table WHERE table_name LIKE '%drawdown_number%'
+
+
+CREATE PROCEDURE [dbo].[FindMyData_String] -- EXEC FindMyData_string 'SQL Best Parctices', 0
+    @DataToFind NVARCHAR(4000),
+    @ExactMatch BIT = 0
+AS
+SET NOCOUNT ON
+
+DECLARE @Temp TABLE(RowId INT IDENTITY(1,1), SchemaName sysname, TableName sysname, ColumnName SysName, DataType VARCHAR(100), DataFound BIT)
+
+    INSERT  INTO @Temp(TableName,SchemaName, ColumnName, DataType)
+    SELECT  C.Table_Name,C.TABLE_SCHEMA, C.Column_Name, C.Data_Type
+    FROM    Information_Schema.Columns AS C
+            INNER Join Information_Schema.Tables AS T
+                ON C.Table_Name = T.Table_Name
+        AND C.TABLE_SCHEMA = T.TABLE_SCHEMA
+    WHERE   Table_Type = 'Base Table'
+            And Data_Type In ('ntext','text','nvarchar','nchar','varchar','char')
+
+
+DECLARE @i INT
+DECLARE @M
+... (truncated) ...
+ReplaceColumnName', ColumnName)
+        FROM    @Temp
+        WHERE   RowId = @i
+
+
+        PRINT @SQL
+        EXEC SP_EXECUTESQL @SQL, @PARAMETERS, @DataExists = @DataExists OUTPUT
+
+        IF @DataExists =1
+            UPDATE @Temp SET DataFound = 1 WHERE RowId = @i
+
+        SET @i = @i + 1
+    END
+
+SELECT  SchemaName,TableName, ColumnName
+FROM    @Temp
+WHERE   DataFound = 1
+
+
+
+```
+
+STATS:
+📊 Execution: 6 | ⏱️ Duration: 29924ms | 💻 CPU: 19168ms | 📖 Reads: 1666310
+
+PLAN:
+── PLAN D'EXÉCUTION (points chauds) ──
+Opérateurs coûteux :
+  • Table Insert sur [@Temp] — coût 0.5891 — ~1 lignes
+  • Compute Scalar sur [sysschobjs] — coût 0.5791 — ~1 lignes
+  • Compute Scalar sur [sysschobjs] — coût 0.5791 — ~1 lignes
+  • Compute Scalar sur [sysschobjs] — coût 0.5791 — ~1 lignes
+  • Filter sur [sysschobjs] — coût 0.5791 — ~1 lignes
+Lignes estimées (racine) : 1.0
+INDEXES:
+  - static_data_table.IX_static_data_table_shortname (NONCLUSTERED)
+  - static_data_table.IX_static_data_table_table_name (NONCLUSTERED)
+  - static_data_table.IX_static_data_table_table_name_ddate_duser_shortname (NONCLUSTERED)
+  - static_data_table.IX_static_data_table_table_name_shortname (NONCLUSTERED)
+  - static_data_table.PK_static_data_table (CLUSTERED)
+  - transaction_generic.IX_transaction_generic_transaction_id_flag_ddate (NONCLUSTERED)
+  - transaction_generic.IX_transaction_generic_transaction_id_text_field1_flag_duser_ddate (NONCLUSTERED)
+  - transaction_generic.PK_transaction_generic (CLUSTERED)
+
+BUSINESS RULES:
+1. 1. Correctness & Maintainability Rules BP-001
+2. 2. Query Performance Rules BP-010
+3. 3. Transactions & Concurrency Rules BP-030
+4. 4. Data Type Rules BP-040
+5. 5. Monitoring & Maintenance Rules BP-050
+6. 6. Rules for LLM-Generated or Automatically Rewritten SQL The rules below apply 
+
+RULES TO RESPECT :
+1. Never convert LEFT JOIN to INNER JOIN - this would change results
+2. Avoid SELECT * - prefer explicit column list
+3. Do not use functions on columns in WHERE
+
+
+IMPORTANT INSTRUCTIONS:
+- Keep the SAME functionality as the original procedure
+- Do not invent tables, columns, or objects that do not exist
+- Preserve the original parameter names and data types
+- If you cannot safely optimize, say so clearly in the diagnostic
+- Do not reduce the scope of the procedure
+- Only suggest changes that preserve the exact same results
+
+Reply ONLY in JSON:
+{
+    "diagnostic": "problem description",
+    "code_optimise": "CREATE PROCEDURE ...",
+    "explication": "why it works",
+    "gain_estime": 75,
+    "risque": "LOW"
+}
+Risk: LOW/MEDIUM/HIGH | Gain: 0-100

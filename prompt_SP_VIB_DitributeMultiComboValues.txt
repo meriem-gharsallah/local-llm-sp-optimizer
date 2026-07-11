@@ -1,0 +1,187 @@
+# Role
+You are a Senior SQL Server Database Engineer with 15+ years of experience.
+
+# Task
+Optimize the stored procedure below. You must produce a version that is MEASURABLY faster and FUNCTIONALLY IDENTICAL to the original.
+
+## What this procedure does (CRITICAL - read carefully)
+Given a matrix shortname (@MatriceShortname), this procedure builds one row containing every value stored in 'constant_matrix' for that matrix. Step 1: it inspects the columns of 'constant_matrix' one by one (via a cursor over sys.tables/sys.columns — this is internal introspection of ONE named table, NOT a schema-wide scan) and keeps only the columns that actually have a non-null value for this matrix shortname, dynamically adding each such column to a temp table #Table with ALTER TABLE. Step 2: it inserts ONE row into #Table containing those values, taken directly from 'constant_matrix' WHERE constant_matrix_shortname = @MatriceShortname AND ddate IS NULL. Step 3: @List is a semicolon-separated list of specific column names (e.g. 'criteria6_text;criteria3_text;value6_text') that the caller wants expanded. Some of these columns hold a COMMA-separated list of multiple values in that single row (e.g. 'A,B,C'). For each column named in @List, in turn, the procedure explodes it via STRING_SPLIT + CROSS APPLY, replacing the one row with several rows (one per split value), while keeping the other columns' values as-is. Doing this for every column in @List, one after another, produces a CARTESIAN EXPANSION: the final result has one row per unique COMBINATION of individual values across all the multi-valued columns requested in @List. Final SELECT * FROM #Table returns all these combination rows. It ONLY ever reads/writes the 'constant_matrix' table (plus temp tables #Table/#TempTABLE and the table-valued function SplitStringBySeparator) — it does NOT search or scan across other tables in the database.
+
+## Stored Procedure: SP_VIB_DitributeMultiComboValues
+```sql
+-- =============================================
+-- Author:		Iyed Belguith
+-- Create date: 18/01/2023
+-- Description:	<Description,,>
+-- Example 'ESignature;CustomerSgement;ProductAddOn', 'Approval_DOA_Matrix'
+-- =============================================
+CREATE  PROCEDURE [dbo].[SP_VIB_DitributeMultiComboValues] -- EXEC SP_VIB_DitributeMultiComboValues 'criteria6_text;criteria3_text;value6_text', 'Approval_DOA_Matrix'
+	@List NVARCHAR(MAX),
+	@MatriceShortname NVARCHAR(250)
+AS
+BEGIN
+	SET NOCOUNT ON;
+	--DECLARE @list VARCHAR(MAX)='criteria6_text;criteria3_text;value6_text'
+	--DECLARE @MatriceShortname NVARCHAR(250)= 'Approval_DOA_Matrix'
+	CREATE TABLE #Table (
+						ID int IDENTITY(1,1),
+						flag NVARCHAR(200)
+						);
+
+	DECLARE @TableLIST TABLE(RowRank INT IDENTITY(1,1),
+								Fields NVARCHAR(200))
+	INSERT INTO @TableLIST(Fields)
+		SELECT item FROM [dbo].[SplitStringBySeparator](@List, ';')
+
+	declare @col varchar(255), @cmd nvarchar(max),@result NVARCHAR(250),@type NVARCHAR(250)
+	DECLARE @ListCols NVARCHAR(Max)
+	DECLARE @ListColsTemp NVARCHAR(Max)
+	DECLARE getinfo cursor for
+	SELECT c.name FROM sys.tables t JOIN sys.columns c ON t.Object_ID = c.Object_ID
+	WHERE t.Name = 'constant_matrix'
+
+	OPEN getinfo
+
+	FETCH NEXT FROM getinfo into @col
+
+	WHILE @@FETCH_STATUS = 0
+	BEGIN
+		SET @type =(SELECT DATA_TYPE  FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME   = 'constant_matrix' AND COLUMN_NAME  =@col )
+					IF @type='nvarchar'
+					  BEGIN
+						SET @type='NVARCHAR(700)'
+					  END
+					ELSE IF @type='decimal'
+					  BEGIN
+						SET @type='DECIMAL(36,2)'
+					  END
+		SET @cmd = 'IF EXISTS (SELECT top 1 * FROM constant_matrix WHERE [' + @col + '] IS NOT NULL AND constant_matrix_shortname='''+@MatriceShortname+''')  
+					BEGIN 
+						SET @Var=''' + @col + ''' 
+					
+						ALTER TABLE #Table 
+							ADD ' + @col +' '+ @type +'  
+						;
+					end
+					ELSE SET @Var=NULL'
+		--PRINT(@cmd)
+		EXEC sp_executesql @cmd, N'@Var NVARCHAR(500) OUTPUT', @Var=@result OUTPUT
+		IF @result IS NOT NULL
+			BEGIN
+			SET @ListCols= CONCAT(@ListCols, @col, ' , ')
+				
+			END
+		FETCH NEXT FROM getinfo into @col
+	END
+
+	CLOSE getinfo
+	DEALLOCATE getinfo
+
+	SET @ListCols =LEFT(@ListCols,LEN(@ListCols)-2)
+	SET @cmd ='INSERT INTO #Table SELECT ''orginal'',' + @ListCols  +' FROM constant_matrix WHERE constant_matrix_shortname='''+@MatriceShortname+''' AND ddate IS NULL'
+
+	EXEC sp_executesql @cmd
+
+	DECLARE @NBrows INT=(SELECT COUNT(Fields) FROM @TableLIST)
+	DECLARE @i INT =1
+	DECLARE @colName NVARCHAR(200)
+	--PRINT(@cmd)
+	SELECT *
+		INTO #TempTABLE
+		FROM #Table
+	DELETE #TempTABLE
+	--PRINT @ListCols
+	WHILE @i <= @NBrows
+	BEGIN
+		SET @colName=(SELECT Fields FROM @TableLIST WHERE RowRank=@i)
+		SET @ListColsTemp =REPLACE(@ListCols,', '+@colName,'')
+
+		SET @cmd='INSERT INTO #TempTABLE(' + @ListColsTemp  +','+ @colName +')
+					  SELECT ' + @ListColsTemp  +', f.value
+					  FROM #Table AS s
+					  CROSS APPLY STRING_SPLIT(s.'+ @colName +', '','') as f'
+		EXEC sp_executesql @cmd
+		DELETE #Table
+		SET @cmd='INSERT INTO #Table (' + @ListCols + ' )
+					SELECT ' + @ListCols + ' FROM #TempTABLE'
+		EXEC sp_executesql @cmd
+		DELETE #TempTABLE
+		--PRINT @cmd
+
+		SET @i=@i+1
+	END
+	SELECT  * FROM #Table
+END
+
+
+
+```
+
+## Execution Statistics
+- execution_count: 6
+- avg_elapsed_ms: 3,600.839
+- avg_logical_reads: 1,522,002.0
+- avg_physical_reads: 69.0
+- avg_cpu_ms: 7,187.174
+- total_elapsed_ms: 21,605.036
+- last_execution_time: 2026-06-17 15:20:04.590000
+- captured_at: 2026-06-17 15:20:22.620000
+
+## Existing Indexes
+- constant_matrix.PK_constant_matrix: constant_matrix_id
+
+## Execution Plan Insights
+- raw_text: Estimated total cost : 0.00328791
+Table scans  : 0
+Index scans  : 0  (sub-optimal, prefer Seek)
+Index seeks  : 0  (optimal)
+Costly operation : RelOp  (cost 0.0033)
+Costly operation : RelOp  (cost 0.0033)
+Costly operation : RelOp  (cost 0.0033)
+Query: -- Voir les paramètres de la SP
+SELECT 
+    name AS parameter_name,
+    system_type_id,
+    max_...
+
+## Relevant Best Practices
+- [IDX-001] Create indexes for WHERE, JOIN, and ORDER BY columns
+- [IDX-004] Column order matters in composite indexes
+- [IDX-007] Update statistics regularly
+- [IDX-009] Choose the clustered index key carefully
+- [QO-004] Avoid functions on columns in WHERE clauses (non-SARGable predicates)
+- [QO-006] Avoid implicit conversions between mismatched data types
+- [QO-012] Batch large DML operations
+- [DS-001] Use sp_executesql instead of EXEC() with string concatenation
+- ... and 8 more rules
+
+
+
+# 🚨 CRITICAL CONSTRAINTS - MUST FOLLOW 🚨
+1. **KEEP EXACTLY THE SAME PROCEDURE NAME**: Do NOT change it
+2. **KEEP EXACTLY THE SAME PARAMETERS**: Do NOT add, remove, or rename any parameter
+3. **KEEP EXACTLY THE SAME FUNCTIONALITY**: The procedure must do the SAME thing
+4. **DO NOT USE CURSORS**: Replace with set-based operations
+5. **DO NOT USE REBUILD INDEX**: Never add index maintenance to SPs
+6. **DO NOT CHANGE THE TABLES**: Use the SAME tables as the original
+
+7. **METADATA INTROSPECTION IS REQUIRED FOR THIS SP**: Querying sys.columns/
+   INFORMATION_SCHEMA.COLUMNS for the SPECIFIC table(s) mentioned is core,
+   necessary functionality — NOT an anti-pattern to remove. Do NOT replace
+   it with a static/hardcoded column list. You MAY replace the literal
+   DECLARE CURSOR loop with a set-based equivalent (e.g. build the dynamic
+   column list via STRING_AGG over a single query against sys.columns for
+   the target table), as long as the SAME runtime discovery of columns is
+   preserved.
+
+# Output format
+---DIAGNOSTIC---
+(List anti-patterns found)
+---CODE---
+(COMPLETE optimized CREATE PROCEDURE with SAME name and SAME parameters, no markdown fences)
+---EXPLANATION---
+(What changed and why)
+---METRICS---
+gain_estime: <0-100>
+risque: <LOW|MEDIUM|HIGH>
+---END---

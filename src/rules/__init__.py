@@ -1,5 +1,4 @@
 from .sql_rules import (
-    PromptRules,
     get_rules_text,
     get_base_rules,
     get_index_rules,
@@ -9,7 +8,6 @@ from .sql_rules import (
 )
 
 __all__ = [
-    "PromptRules",
     "get_rules_text",
     "get_base_rules",
     "get_index_rules",

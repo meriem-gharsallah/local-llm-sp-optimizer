@@ -23,7 +23,7 @@ def save_sp_plans():
     
     # Récupérer TOUTES les procédures utilisateur
     cursor.execute("""
-        SELECT 
+        SELECT   
             name AS procedure_name,
             object_id
         FROM sys.procedures

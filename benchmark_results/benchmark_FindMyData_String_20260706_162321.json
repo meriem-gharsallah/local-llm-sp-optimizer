@@ -1,0 +1,223 @@
+{
+  "sp_name": "FindMyData_String",
+  "optimized_sp": "FindMyData_String_Optimized",
+  "timestamp": "2026-07-06T16:23:21.280530",
+  "test_cases": [
+    {
+      "search": "SQL",
+      "exact": 0
+    },
+    {
+      "search": "SQL",
+      "exact": 1
+    },
+    {
+      "search": "202009",
+      "exact": 0
+    },
+    {
+      "search": "202009",
+      "exact": 1
+    },
+    {
+      "search": "test",
+      "exact": 0
+    },
+    {
+      "search": "test",
+      "exact": 1
+    }
+  ],
+  "iterations": 3,
+  "results": [
+    {
+      "search_value": "SQL",
+      "exact_match": 0,
+      "results": {
+        "Original": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            34138.3319000015,
+            32941.8047000072,
+            37310.71669999801
+          ],
+          "avg_ms": 34796.95,
+          "min_ms": 32941.8,
+          "max_ms": 37310.72,
+          "avg_rows": 17.0,
+          "std_dev": 1843.4,
+          "errors": []
+        },
+        "Optimized (STRING_AGG)": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            37169.868099997984,
+            37474.584600000526,
+            34712.68280000368
+          ],
+          "avg_ms": 36452.38,
+          "min_ms": 34712.68,
+          "max_ms": 37474.58,
+          "avg_rows": 17.0,
+          "std_dev": 1236.42,
+          "errors": []
+        }
+      },
+      "improvement_opt": -4.8
+    },
+    {
+      "search_value": "SQL",
+      "exact_match": 1,
+      "results": {
+        "Original": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            22102.84410000895,
+            16129.221499999403,
+            11689.700300004915
+          ],
+          "avg_ms": 16640.59,
+          "min_ms": 11689.7,
+          "max_ms": 22102.84,
+          "avg_rows": 0.0,
+          "std_dev": 4266.5,
+          "errors": []
+        },
+        "Optimized (STRING_AGG)": {
+          "success": false,
+          "error": "('42000', '[42000] [Microsoft][ODBC SQL Server Driver][SQL Server]The data types text and nvarchar are incompatible in the equal to operator. (402) (SQLExecDirectW)')",
+          "iterations": 3
+        }
+      }
+    },
+    {
+      "search_value": "202009",
+      "exact_match": 0,
+      "results": {
+        "Original": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            1725142.1504000027,
+            30504.105999993044,
+            29871.66380000417
+          ],
+          "avg_ms": 595172.64,
+          "min_ms": 29871.66,
+          "max_ms": 1725142.15,
+          "avg_rows": 5.0,
+          "std_dev": 799009.15,
+          "errors": []
+        },
+        "Optimized (STRING_AGG)": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            53381.297100000666,
+            50306.00989999948,
+            49470.870999997715
+          ],
+          "avg_ms": 51052.73,
+          "min_ms": 49470.87,
+          "max_ms": 53381.3,
+          "avg_rows": 5.0,
+          "std_dev": 1681.48,
+          "errors": []
+        }
+      },
+      "improvement_opt": 91.4
+    },
+    {
+      "search_value": "202009",
+      "exact_match": 1,
+      "results": {
+        "Original": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            22491.692199997487,
+            12244.183100003283,
+            12765.791300000274
+          ],
+          "avg_ms": 15833.89,
+          "min_ms": 12244.18,
+          "max_ms": 22491.69,
+          "avg_rows": 0.0,
+          "std_dev": 4712.59,
+          "errors": []
+        },
+        "Optimized (STRING_AGG)": {
+          "success": false,
+          "error": "('42000', '[42000] [Microsoft][ODBC SQL Server Driver][SQL Server]The data types text and nvarchar are incompatible in the equal to operator. (402) (SQLExecDirectW)')",
+          "iterations": 3
+        }
+      }
+    },
+    {
+      "search_value": "test",
+      "exact_match": 0,
+      "results": {
+        "Original": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            34847.14050000184,
+            25324.83850000426,
+            25292.881699991995
+          ],
+          "avg_ms": 28488.29,
+          "min_ms": 25292.88,
+          "max_ms": 34847.14,
+          "avg_rows": 139.0,
+          "std_dev": 4496.41,
+          "errors": []
+        },
+        "Optimized (STRING_AGG)": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            23432.76579999656,
+            24320.249799988233,
+            22690.017000000807
+          ],
+          "avg_ms": 23481.01,
+          "min_ms": 22690.02,
+          "max_ms": 24320.25,
+          "avg_rows": 140.0,
+          "std_dev": 666.41,
+          "errors": []
+        }
+      },
+      "improvement_opt": 17.6
+    },
+    {
+      "search_value": "test",
+      "exact_match": 1,
+      "results": {
+        "Original": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            21608.198899994022,
+            12034.57800000615,
+            11640.812800003914
+          ],
+          "avg_ms": 15094.53,
+          "min_ms": 11640.81,
+          "max_ms": 21608.2,
+          "avg_rows": 53.0,
+          "std_dev": 4608.66,
+          "errors": []
+        },
+        "Optimized (STRING_AGG)": {
+          "success": false,
+          "error": "('42000', '[42000] [Microsoft][ODBC SQL Server Driver][SQL Server]The data types text and nvarchar are incompatible in the equal to operator. (402) (SQLExecDirectW)')",
+          "iterations": 3
+        }
+      }
+    }
+  ]
+}

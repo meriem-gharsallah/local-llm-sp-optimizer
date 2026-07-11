@@ -1,0 +1,368 @@
+{
+  "sp_name": "FindMyData_String",
+  "versions": [
+    "Original",
+    "Optimized",
+    "V2 (Batch)"
+  ],
+  "timestamp": "2026-07-06T11:51:56.986660",
+  "test_cases": [
+    {
+      "search": "SQL",
+      "exact": 0
+    },
+    {
+      "search": "SQL",
+      "exact": 1
+    },
+    {
+      "search": "202009",
+      "exact": 0
+    },
+    {
+      "search": "202009",
+      "exact": 1
+    },
+    {
+      "search": "test",
+      "exact": 0
+    },
+    {
+      "search": "test",
+      "exact": 1
+    }
+  ],
+  "iterations": 3,
+  "results": [
+    {
+      "search_value": "SQL",
+      "exact_match": 0,
+      "results": {
+        "Original": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            43611.41929999576,
+            35496.5419999935,
+            37258.915099999285
+          ],
+          "avg_ms": 38788.96,
+          "min_ms": 35496.54,
+          "max_ms": 43611.42,
+          "avg_rows": 17.0,
+          "std_dev": 3485.07,
+          "errors": []
+        },
+        "Optimized": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            56678.88590000803,
+            49374.427400005516,
+            39319.59880000795
+          ],
+          "avg_ms": 48457.64,
+          "min_ms": 39319.6,
+          "max_ms": 56678.89,
+          "avg_rows": 17.0,
+          "std_dev": 7116.49,
+          "errors": []
+        },
+        "V2 (Batch)": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            39141.058299996075,
+            35865.78560000635,
+            39732.93450000347
+          ],
+          "avg_ms": 38246.59,
+          "min_ms": 35865.79,
+          "max_ms": 39732.93,
+          "avg_rows": 17.0,
+          "std_dev": 1700.74,
+          "errors": []
+        }
+      },
+      "improvement_opt": -24.9,
+      "speedup_opt": 0.8,
+      "improvement_v2": 1.4,
+      "speedup_v2": 1.0
+    },
+    {
+      "search_value": "SQL",
+      "exact_match": 1,
+      "results": {
+        "Original": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            30838.380700006383,
+            17518.20900000166,
+            15831.725799987908
+          ],
+          "avg_ms": 21396.11,
+          "min_ms": 15831.73,
+          "max_ms": 30838.38,
+          "avg_rows": 0.0,
+          "std_dev": 6712.1,
+          "errors": []
+        },
+        "Optimized": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            25483.473200001754,
+            12718.019299994921,
+            12577.633699998842
+          ],
+          "avg_ms": 16926.38,
+          "min_ms": 12577.63,
+          "max_ms": 25483.47,
+          "avg_rows": 0.0,
+          "std_dev": 6051.05,
+          "errors": []
+        },
+        "V2 (Batch)": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            13292.361899992102,
+            11965.796199991019,
+            11348.306200001389
+          ],
+          "avg_ms": 12202.15,
+          "min_ms": 11348.31,
+          "max_ms": 13292.36,
+          "avg_rows": 0.0,
+          "std_dev": 811.06,
+          "errors": []
+        }
+      },
+      "improvement_opt": 20.9,
+      "speedup_opt": 1.3,
+      "improvement_v2": 43.0,
+      "speedup_v2": 1.8
+    },
+    {
+      "search_value": "202009",
+      "exact_match": 0,
+      "results": {
+        "Original": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            41727.16270000092,
+            35774.835899996106,
+            30613.320000004023
+          ],
+          "avg_ms": 36038.44,
+          "min_ms": 30613.32,
+          "max_ms": 41727.16,
+          "avg_rows": 5.0,
+          "std_dev": 4541.03,
+          "errors": []
+        },
+        "Optimized": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            44056.63250001089,
+            33988.19660001027,
+            30630.20639999013
+          ],
+          "avg_ms": 36225.01,
+          "min_ms": 30630.21,
+          "max_ms": 44056.63,
+          "avg_rows": 5.0,
+          "std_dev": 5704.95,
+          "errors": []
+        },
+        "V2 (Batch)": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            56757.10170000093,
+            50933.41909999435,
+            49038.60020000138
+          ],
+          "avg_ms": 52243.04,
+          "min_ms": 49038.6,
+          "max_ms": 56757.1,
+          "avg_rows": 5.0,
+          "std_dev": 3284.32,
+          "errors": []
+        }
+      },
+      "improvement_opt": -0.5,
+      "speedup_opt": 1.0,
+      "improvement_v2": -45.0,
+      "speedup_v2": 0.7
+    },
+    {
+      "search_value": "202009",
+      "exact_match": 1,
+      "results": {
+        "Original": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            28442.18600000022,
+            18720.272600010503,
+            14360.474499990232
+          ],
+          "avg_ms": 20507.64,
+          "min_ms": 14360.47,
+          "max_ms": 28442.19,
+          "avg_rows": 0.0,
+          "std_dev": 5886.12,
+          "errors": []
+        },
+        "Optimized": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            25943.03480000235,
+            15009.004200008349,
+            12509.581999998773
+          ],
+          "avg_ms": 17820.54,
+          "min_ms": 12509.58,
+          "max_ms": 25943.03,
+          "avg_rows": 0.0,
+          "std_dev": 5833.41,
+          "errors": []
+        },
+        "V2 (Batch)": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            12600.572600000305,
+            12269.813999999315,
+            14071.470499999123
+          ],
+          "avg_ms": 12980.62,
+          "min_ms": 12269.81,
+          "max_ms": 14071.47,
+          "avg_rows": 0.0,
+          "std_dev": 783.08,
+          "errors": []
+        }
+      },
+      "improvement_opt": 13.1,
+      "speedup_opt": 1.2,
+      "improvement_v2": 36.7,
+      "speedup_v2": 1.6
+    },
+    {
+      "search_value": "test",
+      "exact_match": 0,
+      "results": {
+        "Original": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            38939.142100003664,
+            26518.792500006384,
+            25674.725599994417
+          ],
+          "avg_ms": 30377.55,
+          "min_ms": 25674.73,
+          "max_ms": 38939.14,
+          "avg_rows": 139.0,
+          "std_dev": 6063.76,
+          "errors": []
+        },
+        "Optimized": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            37494.78459999955,
+            42807.32410000928,
+            37432.09329999809
+          ],
+          "avg_ms": 39244.73,
+          "min_ms": 37432.09,
+          "max_ms": 42807.32,
+          "avg_rows": 139.0,
+          "std_dev": 2519.26,
+          "errors": []
+        },
+        "V2 (Batch)": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            26910.509300010744,
+            23853.323399991496,
+            23664.064999989932
+          ],
+          "avg_ms": 24809.3,
+          "min_ms": 23664.06,
+          "max_ms": 26910.51,
+          "avg_rows": 140.0,
+          "std_dev": 1487.79,
+          "errors": []
+        }
+      },
+      "improvement_opt": -29.2,
+      "speedup_opt": 0.8,
+      "improvement_v2": 18.3,
+      "speedup_v2": 1.2
+    },
+    {
+      "search_value": "test",
+      "exact_match": 1,
+      "results": {
+        "Original": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            946466.6788000031,
+            11605.901800008724,
+            11604.219100001501
+          ],
+          "avg_ms": 323225.6,
+          "min_ms": 11604.22,
+          "max_ms": 946466.68,
+          "avg_rows": 53.0,
+          "std_dev": 440697.99,
+          "errors": []
+        },
+        "Optimized": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            22271.64960000664,
+            15808.78429999575,
+            12478.180699996301
+          ],
+          "avg_ms": 16852.87,
+          "min_ms": 12478.18,
+          "max_ms": 22271.65,
+          "avg_rows": 53.0,
+          "std_dev": 4065.76,
+          "errors": []
+        },
+        "V2 (Batch)": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            11016.202900005737,
+            13618.703000000096,
+            12348.00460000406
+          ],
+          "avg_ms": 12327.64,
+          "min_ms": 11016.2,
+          "max_ms": 13618.7,
+          "avg_rows": 53.0,
+          "std_dev": 1062.56,
+          "errors": []
+        }
+      },
+      "improvement_opt": 94.8,
+      "speedup_opt": 19.2,
+      "improvement_v2": 96.2,
+      "speedup_v2": 26.2
+    }
+  ]
+}

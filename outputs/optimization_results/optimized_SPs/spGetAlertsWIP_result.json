@@ -1,0 +1,26 @@
+{
+  "sp_name": "spGetAlertsWIP",
+  "score": 43,
+  "execution_count": 1,
+  "avg_elapsed_ms": 297.58,
+  "total_hours_wasted": 0,
+  "status": "success",
+  "diagnostic": "Analysis complete",
+  "optimized_code": "",
+  "explanation": "",
+  "estimated_gain": 50,
+  "risk": "MEDIUM",
+  "duration_seconds": 445.91526675224304,
+  "error": "",
+  "candidate": {
+    "sp_name": "spGetAlertsWIP",
+    "score": 43,
+    "execution_count": 1,
+    "avg_elapsed_ms": 297.58,
+    "avg_logical_reads": 224664.0,
+    "avg_cpu_ms": 1666.991,
+    "total_hours_wasted": 0,
+    "database_name": "AxeCredit",
+    "last_execution_time": "2026-06-17 15:20:20.307000"
+  }
+}

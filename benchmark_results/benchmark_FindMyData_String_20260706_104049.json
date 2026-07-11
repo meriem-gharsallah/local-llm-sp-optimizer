@@ -1,0 +1,180 @@
+{
+  "sp_name": "FindMyData_String",
+  "optimized_sp": "FindMyData_String_Optimized",
+  "timestamp": "2026-07-06T10:40:49.511516",
+  "test_cases": [
+    {
+      "search": "SQL",
+      "exact": 0
+    },
+    {
+      "search": "SQL",
+      "exact": 1
+    },
+    {
+      "search": "202009",
+      "exact": 0
+    },
+    {
+      "search": "202009",
+      "exact": 1
+    },
+    {
+      "search": "test",
+      "exact": 0
+    },
+    {
+      "search": "test",
+      "exact": 1
+    }
+  ],
+  "iterations": 3,
+  "results": [
+    {
+      "search_value": "SQL",
+      "exact_match": 0,
+      "original": {
+        "success": true,
+        "iterations": 3,
+        "durations_ms": [
+          87908.36929999932,
+          62097.34710000339,
+          41553.0798999971
+        ],
+        "avg_ms": 63852.93,
+        "min_ms": 41553.08,
+        "max_ms": 87908.37,
+        "avg_rows": 17.0,
+        "std_dev": 18965.14,
+        "errors": []
+      },
+      "optimized": {
+        "success": false,
+        "error": "('42000', '[42000] [Microsoft][ODBC SQL Server Driver][SQL Server]STRING_AGG aggregation result exceeded the limit of 8000 bytes. Use LOB types to avoid result truncation. (9829) (SQLExecDirectW)')",
+        "iterations": 3
+      }
+    },
+    {
+      "search_value": "SQL",
+      "exact_match": 1,
+      "original": {
+        "success": true,
+        "iterations": 2,
+        "durations_ms": [
+          35846.929499995895,
+          14516.986100003123
+        ],
+        "avg_ms": 25181.96,
+        "min_ms": 14516.99,
+        "max_ms": 35846.93,
+        "avg_rows": 0.0,
+        "std_dev": 10664.97,
+        "errors": [
+          "<method 'execute' of 'pyodbc.Cursor' objects> returned a result with an exception set"
+        ]
+      },
+      "optimized": {
+        "success": false,
+        "error": "('42000', '[42000] [Microsoft][ODBC SQL Server Driver][SQL Server]STRING_AGG aggregation result exceeded the limit of 8000 bytes. Use LOB types to avoid result truncation. (9829) (SQLExecDirectW)')",
+        "iterations": 3
+      }
+    },
+    {
+      "search_value": "202009",
+      "exact_match": 0,
+      "original": {
+        "success": true,
+        "iterations": 2,
+        "durations_ms": [
+          50718.83359999629,
+          32773.3692000038
+        ],
+        "avg_ms": 41746.1,
+        "min_ms": 32773.37,
+        "max_ms": 50718.83,
+        "avg_rows": 5.0,
+        "std_dev": 8972.73,
+        "errors": [
+          "<method 'execute' of 'pyodbc.Cursor' objects> returned a result with an exception set"
+        ]
+      },
+      "optimized": {
+        "success": false,
+        "error": "('42000', '[42000] [Microsoft][ODBC SQL Server Driver][SQL Server]STRING_AGG aggregation result exceeded the limit of 8000 bytes. Use LOB types to avoid result truncation. (9829) (SQLExecDirectW)')",
+        "iterations": 3
+      }
+    },
+    {
+      "search_value": "202009",
+      "exact_match": 1,
+      "original": {
+        "success": true,
+        "iterations": 3,
+        "durations_ms": [
+          30456.079799987492,
+          16812.826399996993,
+          14877.673700000742
+        ],
+        "avg_ms": 20715.53,
+        "min_ms": 14877.67,
+        "max_ms": 30456.08,
+        "avg_rows": 0.0,
+        "std_dev": 6932.77,
+        "errors": []
+      },
+      "optimized": {
+        "success": false,
+        "error": "('42000', '[42000] [Microsoft][ODBC SQL Server Driver][SQL Server]STRING_AGG aggregation result exceeded the limit of 8000 bytes. Use LOB types to avoid result truncation. (9829) (SQLExecDirectW)')",
+        "iterations": 3
+      }
+    },
+    {
+      "search_value": "test",
+      "exact_match": 0,
+      "original": {
+        "success": true,
+        "iterations": 3,
+        "durations_ms": [
+          39109.53700001119,
+          30000.57740000193,
+          27367.274699994596
+        ],
+        "avg_ms": 32159.13,
+        "min_ms": 27367.27,
+        "max_ms": 39109.54,
+        "avg_rows": 139.0,
+        "std_dev": 5030.88,
+        "errors": []
+      },
+      "optimized": {
+        "success": false,
+        "error": "('42000', '[42000] [Microsoft][ODBC SQL Server Driver][SQL Server]STRING_AGG aggregation result exceeded the limit of 8000 bytes. Use LOB types to avoid result truncation. (9829) (SQLExecDirectW)')",
+        "iterations": 3
+      }
+    },
+    {
+      "search_value": "test",
+      "exact_match": 1,
+      "original": {
+        "success": true,
+        "iterations": 3,
+        "durations_ms": [
+          25578.33639999444,
+          13203.583599999547,
+          16978.05679999874
+        ],
+        "avg_ms": 18586.66,
+        "min_ms": 13203.58,
+        "max_ms": 25578.34,
+        "avg_rows": 53.0,
+        "std_dev": 5178.44,
+        "errors": []
+      },
+      "optimized": {
+        "success": false,
+        "error": "('42000', '[42000] [Microsoft][ODBC SQL Server Driver][SQL Server]STRING_AGG aggregation result exceeded the limit of 8000 bytes. Use LOB types to avoid result truncation. (9829) (SQLExecDirectW)')",
+        "iterations": 3
+      }
+    }
+  ]
+}

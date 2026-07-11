@@ -1,0 +1,26 @@
+{
+  "sp_name": "SpGetJobsList",
+  "score": 58,
+  "execution_count": 6,
+  "avg_elapsed_ms": 8529.161,
+  "total_hours_wasted": 0.01,
+  "status": "success",
+  "diagnostic": "Analysis complete",
+  "optimized_code": "",
+  "explanation": "",
+  "estimated_gain": 50,
+  "risk": "MEDIUM",
+  "duration_seconds": 132.04758834838867,
+  "error": "",
+  "candidate": {
+    "sp_name": "SpGetJobsList",
+    "score": 58,
+    "execution_count": 6,
+    "avg_elapsed_ms": 8529.161,
+    "avg_logical_reads": 33717.0,
+    "avg_cpu_ms": 1116.742,
+    "total_hours_wasted": 0.01,
+    "database_name": "AxeCredit",
+    "last_execution_time": "2026-06-17 15:19:56.080000"
+  }
+}

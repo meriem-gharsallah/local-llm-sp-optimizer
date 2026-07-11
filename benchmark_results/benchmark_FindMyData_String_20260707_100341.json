@@ -1,0 +1,256 @@
+{
+  "sp_name": "FindMyData_String",
+  "optimized_sp": "FindMyData_String_Optimized",
+  "timestamp": "2026-07-07T10:03:41.067715",
+  "test_cases": [
+    {
+      "search": "SQL",
+      "exact": 0
+    },
+    {
+      "search": "SQL",
+      "exact": 1
+    },
+    {
+      "search": "202009",
+      "exact": 0
+    },
+    {
+      "search": "202009",
+      "exact": 1
+    },
+    {
+      "search": "test",
+      "exact": 0
+    },
+    {
+      "search": "test",
+      "exact": 1
+    }
+  ],
+  "iterations": 3,
+  "results": [
+    {
+      "search_value": "SQL",
+      "exact_match": 0,
+      "results": {
+        "Original": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            41052.16940000537,
+            35918.8673000026,
+            33660.949700002675
+          ],
+          "avg_ms": 36877.33,
+          "min_ms": 33660.95,
+          "max_ms": 41052.17,
+          "avg_rows": 17.0,
+          "std_dev": 3092.63,
+          "errors": []
+        },
+        "Optimized (STRING_AGG)": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            37301.516899999115,
+            33128.0737999914,
+            33986.05700000189
+          ],
+          "avg_ms": 34805.22,
+          "min_ms": 33128.07,
+          "max_ms": 37301.52,
+          "avg_rows": 17.0,
+          "std_dev": 1799.57,
+          "errors": []
+        }
+      },
+      "improvement_opt": 5.6
+    },
+    {
+      "search_value": "SQL",
+      "exact_match": 1,
+      "results": {
+        "Original": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            21654.12700000161,
+            12517.703899997286,
+            11088.340299989795
+          ],
+          "avg_ms": 15086.72,
+          "min_ms": 11088.34,
+          "max_ms": 21654.13,
+          "avg_rows": 0.0,
+          "std_dev": 4680.37,
+          "errors": []
+        },
+        "Optimized (STRING_AGG)": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            16616.528300000937,
+            8962.197800006834,
+            10334.380400003283
+          ],
+          "avg_ms": 11971.04,
+          "min_ms": 8962.2,
+          "max_ms": 16616.53,
+          "avg_rows": 0.0,
+          "std_dev": 3332.28,
+          "errors": []
+        }
+      },
+      "improvement_opt": 20.7
+    },
+    {
+      "search_value": "202009",
+      "exact_match": 0,
+      "results": {
+        "Original": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            47701.90880000882,
+            60937198.617300004,
+            41960.18930000719
+          ],
+          "avg_ms": 20342286.91,
+          "min_ms": 41960.19,
+          "max_ms": 60937198.62,
+          "avg_rows": 5.0,
+          "std_dev": 28704937.45,
+          "errors": []
+        },
+        "Optimized (STRING_AGG)": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            55750.70649999543,
+            50698.15680000465,
+            46955.34040001803
+          ],
+          "avg_ms": 51134.73,
+          "min_ms": 46955.34,
+          "max_ms": 55750.71,
+          "avg_rows": 5.0,
+          "std_dev": 3603.94,
+          "errors": []
+        }
+      },
+      "improvement_opt": 99.7
+    },
+    {
+      "search_value": "202009",
+      "exact_match": 1,
+      "results": {
+        "Original": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            23991.078299994115,
+            11451.658699981635,
+            14408.500699995784
+          ],
+          "avg_ms": 16617.08,
+          "min_ms": 11451.66,
+          "max_ms": 23991.08,
+          "avg_rows": 0.0,
+          "std_dev": 5352.11,
+          "errors": []
+        },
+        "Optimized (STRING_AGG)": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            19628.56979999924,
+            10292.22919998574,
+            8900.352600001497
+          ],
+          "avg_ms": 12940.38,
+          "min_ms": 8900.35,
+          "max_ms": 19628.57,
+          "avg_rows": 0.0,
+          "std_dev": 4763.28,
+          "errors": []
+        }
+      },
+      "improvement_opt": 22.1
+    },
+    {
+      "search_value": "test",
+      "exact_match": 0,
+      "results": {
+        "Original": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            1504939.1739999992,
+            40024.59950000048,
+            30159.574699995574
+          ],
+          "avg_ms": 525041.12,
+          "min_ms": 30159.57,
+          "max_ms": 1504939.17,
+          "avg_rows": 139.0,
+          "std_dev": 692904.27,
+          "errors": []
+        },
+        "Optimized (STRING_AGG)": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            32700.336800015066,
+            26222.805600002175,
+            22481.89419999835
+          ],
+          "avg_ms": 27135.01,
+          "min_ms": 22481.89,
+          "max_ms": 32700.34,
+          "avg_rows": 140.0,
+          "std_dev": 4221.23,
+          "errors": []
+        }
+      },
+      "improvement_opt": 94.8
+    },
+    {
+      "search_value": "test",
+      "exact_match": 1,
+      "results": {
+        "Original": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            24550.692099990556,
+            11088.165299996035,
+            11345.528000005288
+          ],
+          "avg_ms": 15661.46,
+          "min_ms": 11088.17,
+          "max_ms": 24550.69,
+          "avg_rows": 53.0,
+          "std_dev": 6286.51,
+          "errors": []
+        },
+        "Optimized (STRING_AGG)": {
+          "success": true,
+          "iterations": 3,
+          "durations_ms": [
+            8389.057799999136,
+            7733.922799990978,
+            7668.258499994408
+          ],
+          "avg_ms": 7930.41,
+          "min_ms": 7668.26,
+          "max_ms": 8389.06,
+          "avg_rows": 53.0,
+          "std_dev": 325.42,
+          "errors": []
+        }
+      },
+      "improvement_opt": 49.4
+    }
+  ]
+}

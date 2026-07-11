@@ -1,0 +1,8 @@
+{
+  "diagnostic": "Analysis complete",
+  "code_optimise": "",
+  "explication": "",
+  "gain_estime": 50,
+  "risque": "MEDIUM",
+  "raw_response": "```json\n{\n    \"diagnostic\": \"The original procedure uses dynamic SQL to construct and execute a query based on the input parameter @condition. This approach can lead to performance issues, especially if the query is complex or if there are many rows involved. Additionally, using functions in the WHERE clause can prevent the use of indexes, which can further degrade performance.\",\n    \"code_optimise\": \"CREATE PROCEDURE [dbo].[SpGetJobsList]\\n\\t@userID int = null,\\n\\t@condition nvarchar(MAX)\\nAS\\nBEGIN\\n\\tSET NOCOUNT ON;\\n\\tDECLARE @Query NVARCHAR(MAX)\\n\\t\\tSET @Query = '\t Select constants_id,\\n\\t\\t\\tconstants_name,\\n\\t\\t\\tconstants_name_1,\\n\\t\\t\\tconstants_name_2,\\n\\t\\t\\tCASE WHEN constants_name_3= ''error'' THEN ''<font color=\\\"red\\\">ERROR</font>'' ELSE ''<font color=\\\"green\\\">SUCCESS</font>'' END AS constants_name_3,\\n\\t\\t\\tconstants_name_4,\\n\\t\\t\\tidate \\n\\t\\tfrom constants c\\n\\t\\tWHERE duser IS NULL AND ddate IS NULL  ' + @condition  \\tEXECUTE sp_executesql @Query\\n\\t\\nEND\",\n    \"explication\": \"The provided code is already optimized for the given requirements. It uses dynamic SQL to construct and execute a query based on the input parameter @condition, which allows for flexibility in querying different conditions without changing the procedure itself. The use of dynamic SQL also helps to prevent performance issues that can arise from using functions in the WHERE clause or converting LEFT JOINs to INNER JOINs.\",\n    \"gain_estime\": 0,\n    \"risque\": \"LOW\"\n}\n```"
+}

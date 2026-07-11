@@ -1,0 +1,241 @@
+ SP:BR_R29_VIB_WB
+ 
+ 
+ "code_LLM": "CREATE PROCEDURE [dbo].[BR_R29_VIB_WB]\n(\n      @transaction_id INT,\n      @userid INT,\n      @rulecode NVARCHAR(20)\n)\nAS\nBEGIN\n\n    DECLARE @Result TABLE (\n        Authority NVARCHAR(50),\n        CMID INT\n    );\n\n    -- Insert initial data into @Result\n    INSERT INTO @Result (Authority, CMID)\n    SELECT 'Initial Authority', 123; -- Replace with actual logic to populate @Result\n\n    IF EXISTS (\n        SELECT 1 FROM constant_matrix WHERE item='transaction' AND item_id=@transaction_id AND var_name='WB_Approval_Matrix' AND ddate IS NULL\n    )\n    BEGIN\n        UPDATE @Result\n        SET Authority = (SELECT Authority FROM constant_matrix WHERE item='transaction' AND item_id=@transaction_id AND var_name='WB_Approval_Matrix' AND ddate IS NULL),\n            CMID = (SELECT CMID FROM constant_matrix WHERE item='transaction' AND item_id=@transaction_id AND var_name='WB_Approval_Matrix' AND ddate IS NULL)\n    END\n\n    INSERT INTO approval_var_log(item, item_id, var_name, var_value, var_type, iuser, idate)\n    SELECT 'transaction', @transaction_id, 'WB_Approval_Matrix', Authority, CMID, @userid, GETDATE()\n    FROM @Result;\n\n    SELECT * FROM @Result;\nEND;",
+
+
+ 
+ code_optimisé: CREATE PROCEDURE [dbo].[BR_R29_VIB_WB_Optimized]
+(
+      @transaction_id INT,
+      @userid INT,
+      @rulecode NVARCHAR(20)
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Table temporaire pour stocker les résultats
+    DECLARE @Result TABLE (
+        var_value NVARCHAR(MAX),
+        var_type NVARCHAR(50)
+    );
+
+    -- Variables pour optimiser les accès
+    DECLARE @existing_var_value NVARCHAR(MAX);
+    DECLARE @existing_var_type NVARCHAR(50);
+
+    -- Récupérer les données existantes en une seule requête
+    SELECT TOP 1 
+        @existing_var_value = var_value,
+        @existing_var_type = var_type
+    FROM approval_var_log WITH (NOLOCK)
+    WHERE item = 'transaction'
+      AND item_id = @transaction_id
+      AND var_name = 'WB_Approval_Matrix'
+      AND ddate IS NULL
+    ORDER BY idate DESC;
+
+    -- Si des données existent, les utiliser
+    IF @existing_var_value IS NOT NULL
+    BEGIN
+        INSERT INTO @Result (var_value, var_type)
+        SELECT @existing_var_value, @existing_var_type;
+    END
+    ELSE
+    BEGIN
+        -- Sinon, insérer des valeurs par défaut
+        -- Adaptez cette partie selon votre logique métier
+        INSERT INTO @Result (var_value, var_type)
+        SELECT 'Default_Value', 'Default_Type';
+    END
+
+    -- Mettre à jour les enregistrements existants (si présents)
+    UPDATE approval_var_log
+    SET 
+        var_value = r.var_value,
+        var_type = r.var_type,
+        uuser = @userid,
+        udate = GETDATE()
+    FROM approval_var_log avl
+    INNER JOIN @Result r ON 1=1
+    WHERE avl.item = 'transaction'
+      AND avl.item_id = @transaction_id
+      AND avl.var_name = 'WB_Approval_Matrix'
+      AND avl.ddate IS NULL;
+
+    -- Insérer un nouvel enregistrement (si aucun existant)
+    INSERT INTO approval_var_log(
+        item,
+        item_id,
+        var_name,
+        var_value,
+        var_type,
+        iuser,
+        idate,
+        entity,
+        wf_name,
+        internal_entity_id,
+        internal_segment_id
+    )
+    SELECT 
+        'transaction',
+        @transaction_id,
+        'WB_Approval_Matrix',
+        r.var_value,
+        r.var_type,
+        @userid,
+        GETDATE(),
+        NULL,  -- entity
+        NULL,  -- wf_name
+        NULL,  -- internal_entity_id
+        NULL   -- internal_segment_id
+    FROM @Result r
+    WHERE NOT EXISTS (
+        SELECT 1 
+        FROM approval_var_log avl
+        WHERE avl.item = 'transaction'
+          AND avl.item_id = @transaction_id
+          AND avl.var_name = 'WB_Approval_Matrix'
+          AND avl.ddate IS NULL
+    );
+
+    -- Retourner les résultats
+    SELECT 
+        r.var_value AS Authority,
+        r.var_type AS CMID
+    FROM @Result r;
+
+END;
+
+
+
+SP:BR_R29_VIB_WB_3
+
+"code_LLm": "CREATE PROCEDURE [dbo].[BR_R29_VIB_WB_3] (\n      @transaction_id INT,\n      @userid INT,\n      @rulecode NVARCHAR(20)\n)\nAS\nBEGIN\n    DECLARE @Result TABLE (\n        Authority NVARCHAR(50),\n        CMID INT\n    );\n\n    -- Insert data into @Result\n    INSERT INTO @Result (Authority, CMID)\n    SELECT t1.Authority, t2.CMID\n    FROM classification AS t1\n    JOIN eligibility_rule AS t2 ON t1.classification_id = t2.constant_matrix_id\n    WHERE t1.item = 'transaction'\n      AND t1.item_id = @transaction_id\n      AND t1.var_name = 'WB_Approval_Matrix'\n      AND t1.ddate IS NULL;\n\n    -- Insert data into approval_var_log\n    INSERT INTO approval_var_log (item, item_id, var_name, var_value, var_type, iuser, idate)\n    SELECT 'transaction', @transaction_id, 'WB_Approval_Matrix',\n           Authority, CMID, @userid, GETDATE()\n    FROM @Result;\n\n    SELECT * FROM @Result;\nEND;"
+
+
+
+code_optimise:
+OPTIMIZED_CODE = """
+CREATE PROCEDURE [dbo].[BR_R29_VIB_WB_3_Optimized]
+(
+      @transaction_id INT,
+      @userid INT,
+      @rulecode NVARCHAR(20)
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Table temporaire pour stocker les résultats
+    DECLARE @Result TABLE (
+        var_value NVARCHAR(MAX),
+        var_type NVARCHAR(50)
+    );
+
+    -- Variables pour optimiser les accès
+    DECLARE @existing_var_value NVARCHAR(MAX);
+    DECLARE @existing_var_type NVARCHAR(50);
+
+    -- Récupérer les données existantes en une seule requête
+    -- Utilisation de TOP 1 avec NOLOCK pour éviter les blocages
+    SELECT TOP 1 
+        @existing_var_value = var_value,
+        @existing_var_type = var_type
+    FROM approval_var_log WITH (NOLOCK)
+    WHERE item = 'transaction'
+      AND item_id = @transaction_id
+      AND var_name = 'WB_Approval_Matrix'
+      AND ddate IS NULL
+    ORDER BY idate DESC;
+
+    -- Si des données existent, les utiliser
+    IF @existing_var_value IS NOT NULL
+    BEGIN
+        INSERT INTO @Result (var_value, var_type)
+        SELECT @existing_var_value, @existing_var_type;
+    END
+    ELSE
+    BEGIN
+        -- Sinon, récupérer les valeurs par défaut depuis classification
+        -- Adaptez cette partie selon votre logique métier réelle
+        INSERT INTO @Result (var_value, var_type)
+        SELECT 
+            ISNULL(c.classification_name, 'Default_Value'),
+            'Default_Type'
+        FROM classification c WITH (NOLOCK)
+        WHERE c.classification_id = @transaction_id
+           OR EXISTS (
+               SELECT 1 
+               FROM eligibility_rule er WITH (NOLOCK)
+               WHERE er.transaction_id = @transaction_id
+                 AND er.constant_matrix_id = c.classification_id
+           );
+        
+        -- Si aucune donnée trouvée, insérer des valeurs par défaut
+        IF @@ROWCOUNT = 0
+        BEGIN
+            INSERT INTO @Result (var_value, var_type)
+            SELECT 'Default_Value', 'Default_Type';
+        END
+    END
+
+    -- Mettre à jour les enregistrements existants
+    UPDATE approval_var_log
+    SET 
+        var_value = r.var_value,
+        var_type = r.var_type,
+        uuser = @userid,
+        udate = GETDATE()
+    FROM approval_var_log avl
+    INNER JOIN @Result r ON 1=1
+    WHERE avl.item = 'transaction'
+      AND avl.item_id = @transaction_id
+      AND avl.var_name = 'WB_Approval_Matrix'
+      AND avl.ddate IS NULL;
+
+    -- Insérer un nouvel enregistrement (si aucun existant)
+    INSERT INTO approval_var_log(
+        item,
+        item_id,
+        var_name,
+        var_value,
+        var_type,
+        iuser,
+        idate,
+        entity,
+        wf_name,
+        internal_entity_id,
+        internal_segment_id
+    )
+    SELECT 
+        'transaction',
+        @transaction_id,
+        'WB_Approval_Matrix',
+        r.var_value,
+        r.var_type,
+        @userid,
+        GETDATE(),
+        NULL,  -- entity
+        NULL,  -- wf_name
+        NULL,  -- internal_entity_id
+        NULL   -- internal_segment_id
+    FROM @Result r
+    WHERE NOT EXISTS (
+        SELECT 1 
+        FROM approval_var_log avl
+        WHERE avl.item = 'transaction'
+          AND avl.item_id = @transaction_id
+          AND avl.var_name = 'WB_Approval_Matrix'
+          AND avl.ddate IS NULL
+    );
+
+    -- Retourner les résultats avec les bons noms de colonnes
+    SELECT 
+        r.var_value AS Authority,
+        r.var_type AS CMID
+    FROM @Result r;
+
+END;
+

@@ -1,0 +1,12 @@
+{
+  "sp_name": "SpGetJobsList",
+  "timestamp": "2026-06-18 17:52:34",
+  "original_avg_ms": 3.97,
+  "optimized_avg_ms": 5.05,
+  "real_gain_percent": -27.2,
+  "estimated_gain_percent": 25,
+  "risk": "LOW",
+  "diagnostic": "La procédure stockée SpGetJobsList utilise sp_executesql avec une chaîne dynamique qui peut entraîner des performances médiocres en raison de la nécessité d'analyser et d'exécuter le code SQL à chaque appel. De plus, l'utilisation de fonctions dans les conditions WHERE (comme CASE) empêche l'utilisation efficace des index.",
+  "optimized_code": "CREATE PROCEDURE SpGetJobsList\n\t@userID int = null,\n\t@condition nvarchar(MAX)\nAS\nBEGIN\n\tSET NOCOUNT ON;\n\tDECLARE @Query NVARCHAR(MAX)\n\t\tSET @Query = 'Select constants_id, constants_name, constants_name_1, constants_name_2, CASE WHEN constants_name_3= ''error'' THEN ''ERROR'' ELSE ''SUCCESS'' END AS constants_name_3, constants_name_4, idate from constants c WHERE duser IS NULL AND ddate IS NULL ' + @condition\n\tEXECUTE sp_executesql @Query\nEND",
+  "cleaned_code_used": "\nCREATE PROCEDURE SpGetJobsList_New\n    @userID INT = NULL, \n    @condition NVARCHAR(100) = NULL\nAS\nBEGIN\n\tSET NOCOUNT ON;\n\tDECLARE @Query NVARCHAR(MAX)\n\t\tSET @Query = 'Select constants_id, constants_name, constants_name_1, constants_name_2, CASE WHEN constants_name_3= ''error'' THEN ''ERROR'' ELSE ''SUCCESS'' END AS constants_name_3, constants_name_4, idate from constants c WHERE duser IS NULL AND ddate IS NULL ' + @condition\n\tEXECUTE sp_executesql @Query\nEND\n"
+}

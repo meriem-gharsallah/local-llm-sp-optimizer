@@ -1,0 +1,26 @@
+{
+  "sp_name": "AfterUpdateMatriceLAD",
+  "score": 43,
+  "execution_count": 1,
+  "avg_elapsed_ms": 420.123,
+  "total_hours_wasted": 0,
+  "status": "success",
+  "diagnostic": "The original stored procedure performs multiple updates on the same table, which can be inefficient due to locking and logging overhead. By combining these updates into a single statement with multiple SET clauses, we reduce the number of operations and improve performance.",
+  "optimized_code": "CREATE PROCEDURE [dbo].[AfterUpdateMatriceLAD]\nAS \nBEGIN\n    UPDATE constant_matrix \n    SET criteria1_text = '',\n        criteria2_text = '',\n        criteria3_text = '',\n        criteria4_text = '',\n        criteria5_text = '',\n        criteria6_text = '',\n        criteria7_text = '',\n        criteria8_text = '',\n        criteria9_text = '',\n        criteria10_text = '',\n        criteria1_table = '',\n        criteria2_table = '',\n        criteria3_table = '',\n        criteria4_table = '',\n        criteria5_table = '' \n    WHERE constant_matrix_shortname = 'Matrice_LAD' AND (\n        criteria1_text  = 'N/A'\n        OR criteria2_text  = 'N/A'\n        OR criteria3_text  = 'N/A'\n        OR criteria4_text  = 'N/A'\n        OR criteria5_text  = 'N/A'\n        OR criteria6_text  = 'N/A'\n        OR criteria7_text  = 'N/A'\n        OR criteria8_text  = 'N/A'\n        OR criteria9_text  = 'N/A'\n        OR criteria10_text = 'N/A'\n        OR criteria1_table = 'N/A'\n        OR criteria2_table = 'N/A'\n        OR criteria3_table = 'N/A'\n        OR criteria4_table = 'N/A'\n        OR criteria5_table = 'N/A'\n    );\nEND;",
+  "explanation": "The original procedure had multiple UPDATE statements targeting the same table and columns. By combining these into a single statement, we reduce the number of operations on the database, which can lead to improved performance due to reduced locking and logging overhead.",
+  "estimated_gain": 75,
+  "risk": "LOW",
+  "duration_seconds": 203.18380761146545,
+  "error": "",
+  "candidate": {
+    "sp_name": "AfterUpdateMatriceLAD",
+    "score": 43,
+    "execution_count": 1,
+    "avg_elapsed_ms": 420.123,
+    "avg_logical_reads": 259185.0,
+    "avg_cpu_ms": 1687.905,
+    "total_hours_wasted": 0,
+    "database_name": "AxeCredit",
+    "last_execution_time": "2026-06-17 15:05:38.253000"
+  }
+}

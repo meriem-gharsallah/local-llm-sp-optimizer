@@ -1,0 +1,27 @@
+{
+  "timestamp": "2026-06-25T17:16:02.529341",
+  "total_duration_seconds": 454.8587989807129,
+  "summary": {
+    "total": 1,
+    "success": 1,
+    "error": 0,
+    "skipped": 0
+  },
+  "results": [
+    {
+      "sp_name": "SearchAllTables",
+      "score": 75,
+      "execution_count": 7,
+      "avg_elapsed_ms": 112753.356,
+      "total_hours_wasted": 0.22,
+      "status": "success",
+      "diagnostic": "Extracted from raw response",
+      "optimized_code": "CREATE PROCEDURE SearchAllTables\n    @TableName NVARCHAR(128),\n    @SearchValue NVARCHAR(255)\nAS\nBEGIN\n    SET NOCOUNT ON;\n\n    DECLARE @SQL NVARCHAR(MAX);\n\n    -- Update table\n    SET @SQL = 'UPDATE ' + QUOTENAME(@TableName) + ' SET Status = ''Updated'' WHERE ColumnName LIKE @SearchValue';\n    EXEC sp_executesql @SQL, N'@SearchValue NVARCHAR(255)', @SearchValue;\n\n    -- Insert into another table\n    SET @SQL = 'INSERT INTO AnotherTable (Column1, Column2) SELECT Column1, Column2 FROM ' + QUOTENAME(@TableName) + ' WHERE ColumnName LIKE @SearchValue';\n    EXEC sp_executesql @SQL, N'@SearchValue NVARCHAR(255)', @SearchValue;\n\n    -- Delete from another table\n    SET @SQL = 'DELETE FROM YetAnotherTable WHERE Column1 IN (SELECT Column1 FROM ' + QUOTENAME(@TableName) + ' WHERE ColumnName LIKE @SearchValue)';\n    EXEC sp_executesql @SQL, N'@SearchValue NVARCHAR(255)', @SearchValue;\n\n    -- Select from a table\n    SET @SQL = 'SELECT * FROM ' + QUOTENAME(@TableName) + ' WHERE ColumnName LIKE @SearchValue';\n    EXEC sp_executesql @SQL, N'@SearchValue NVARCHAR(255)', @SearchValue;\nEND",
+      "explanation": "No explanation provided",
+      "estimated_gain": 50,
+      "risk": "MEDIUM",
+      "duration_seconds": 454.85124492645264,
+      "error": ""
+    }
+  ]
+}

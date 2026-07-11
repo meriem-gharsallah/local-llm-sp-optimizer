@@ -1,0 +1,26 @@
+{
+  "sp_name": "SpGetLAD",
+  "score": 58,
+  "execution_count": 6,
+  "avg_elapsed_ms": 1214.621,
+  "total_hours_wasted": 0,
+  "status": "success",
+  "diagnostic": "Analysis complete",
+  "optimized_code": "",
+  "explanation": "",
+  "estimated_gain": 50,
+  "risk": "MEDIUM",
+  "duration_seconds": 483.4603488445282,
+  "error": "",
+  "candidate": {
+    "sp_name": "SpGetLAD",
+    "score": 58,
+    "execution_count": 6,
+    "avg_elapsed_ms": 1214.621,
+    "avg_logical_reads": 199365.0,
+    "avg_cpu_ms": 1495.325,
+    "total_hours_wasted": 0,
+    "database_name": "AxeCredit",
+    "last_execution_time": "2026-06-17 15:20:10.753000"
+  }
+}

@@ -1,0 +1,709 @@
+{
+  "version": "2.0",
+  "description": "SQL Server 2019/2022 best practices knowledge base for stored procedure optimization. Designed for RAG retrieval by category or keyword, and for full injection if needed.",
+  "target_version": "SQL Server 2019/2022 (compatible with Azure SQL Database, minor differences noted where relevant)",
+  "usage_notes": "Each rule includes 'detect_keywords' to help match a rule to a code pattern found in a stored procedure, and 'severity' to help prioritize fixes. 'impact' estimates relative performance gain. Categories are self-contained for RAG retrieval.",
+
+  "categories": {
+    "indexing": {
+      "title": "Indexing Best Practices",
+      "summary": "Proper indexing is the single highest-leverage optimization for SQL Server. Most SP performance issues trace back to missing, wrong, or excessive indexes.",
+      "rules": [
+        {
+          "id": "IDX-001",
+          "title": "Create indexes for WHERE, JOIN, and ORDER BY columns",
+          "description": "Always create indexes on columns used in WHERE, JOIN, and ORDER BY clauses. Without them, SQL Server performs table/clustered index scans.",
+          "example": "CREATE INDEX IX_Orders_CustomerId ON Orders(CustomerId)",
+          "detect_keywords": ["WHERE", "JOIN", "ORDER BY", "GROUP BY"],
+          "severity": "high",
+          "impact": "high"
+        },
+        {
+          "id": "IDX-002",
+          "title": "Use INCLUDE columns for covering indexes",
+          "description": "When a query only needs certain columns beyond the key, use INCLUDE to avoid key lookups (RID/clustered key lookups are expensive at scale).",
+          "example": "CREATE INDEX IX_Orders_CustomerId ON Orders(CustomerId) INCLUDE (OrderDate, TotalAmount)",
+          "detect_keywords": ["SELECT", "key lookup", "covering index"],
+          "severity": "medium",
+          "impact": "medium"
+        },
+        {
+          "id": "IDX-003",
+          "title": "Avoid over-indexing",
+          "description": "Too many indexes slow down INSERT, UPDATE, DELETE operations because each index must be maintained. Keep only indexes that are actually used (check sys.dm_db_index_usage_stats).",
+          "detect_keywords": ["CREATE INDEX", "INSERT", "UPDATE", "DELETE"],
+          "severity": "medium",
+          "impact": "medium"
+        },
+        {
+          "id": "IDX-004",
+          "title": "Column order matters in composite indexes",
+          "description": "In a multi-column index, place the most selective/equality-filtered column first, then range-filtered columns, matching how the query filters. An index on (A,B) does not help a query that filters only on B.",
+          "bad": "CREATE INDEX IX_Bad ON Orders(OrderDate, CustomerId) -- query filters mainly on CustomerId",
+          "good": "CREATE INDEX IX_Good ON Orders(CustomerId, OrderDate)",
+          "detect_keywords": [
+            "composite index",
+            "multi-column",
+            "WHERE",
+            "AND"
+          ],
+          "severity": "high",
+          "impact": "high"
+        },
+        {
+          "id": "IDX-005",
+          "title": "Avoid indexing low-cardinality columns alone",
+          "description": "An index on a column with few distinct values (e.g. a boolean/status flag with 2-3 values) is rarely useful alone; the optimizer often prefers a scan. Consider a filtered index instead.",
+          "example": "CREATE INDEX IX_Orders_Active ON Orders(CustomerId) WHERE IsDeleted = 0",
+          "detect_keywords": ["bit column", "status flag", "filtered index"],
+          "severity": "low",
+          "impact": "medium"
+        },
+        {
+          "id": "IDX-006",
+          "title": "Rebuild or reorganize fragmented indexes",
+          "description": "Check sys.dm_db_index_physical_stats regularly. Fragmentation > 30% → REBUILD; 5-30% → REORGANIZE.",
+          "example": "ALTER INDEX IX_Name ON TableName REBUILD; -- or REORGANIZE for online-friendly maintenance",
+          "detect_keywords": [
+            "fragmentation",
+            "index maintenance",
+            "REBUILD",
+            "REORGANIZE"
+          ],
+          "severity": "medium",
+          "impact": "medium"
+        },
+        {
+          "id": "IDX-007",
+          "title": "Update statistics regularly",
+          "description": "The query optimizer relies on statistics to choose plans. Stale statistics cause bad cardinality estimates and poor plans, especially after bulk loads.",
+          "example": "UPDATE STATISTICS TableName WITH FULLSCAN; -- or rely on AUTO_UPDATE_STATISTICS",
+          "detect_keywords": ["statistics", "cardinality", "bulk insert"],
+          "severity": "high",
+          "impact": "high"
+        },
+        {
+          "id": "IDX-008",
+          "title": "Use filtered indexes for sparse/partial data",
+          "description": "When queries consistently filter on a subset of rows (e.g. only active records, only non-null values), a filtered index is smaller and faster than a full index.",
+          "example": "CREATE INDEX IX_Orders_Pending ON Orders(OrderId) WHERE Status = 'Pending'",
+          "detect_keywords": ["WHERE Status", "partial data", "sparse"],
+          "severity": "medium",
+          "impact": "medium"
+        },
+        {
+          "id": "IDX-009",
+          "title": "Choose the clustered index key carefully",
+          "description": "Clustered index keys should be narrow, static (rarely updated), and ideally ever-increasing (e.g. IDENTITY) to avoid page splits and fragmentation. Avoid wide composite keys or GUIDs (use NEWSEQUENTIALID if a GUID is required).",
+          "bad": "Clustered index on a random GUID column",
+          "good": "Clustered index on an IDENTITY column or NEWSEQUENTIALID()",
+          "detect_keywords": [
+            "CLUSTERED",
+            "PRIMARY KEY",
+            "GUID",
+            "UNIQUEIDENTIFIER"
+          ],
+          "severity": "high",
+          "impact": "high"
+        },
+        {
+          "id": "IDX-010",
+          "title": "Identify missing indexes via DMVs before adding new ones",
+          "description": "Use sys.dm_db_missing_index_details / sys.dm_db_missing_index_group_stats to get evidence-based index suggestions instead of guessing. Validate impact before creating.",
+          "example": "SELECT * FROM sys.dm_db_missing_index_details",
+          "detect_keywords": ["missing index", "DMV", "execution plan warning"],
+          "severity": "medium",
+          "impact": "medium"
+        }
+      ]
+    },
+
+    "query_optimization": {
+      "title": "Query Optimization",
+      "summary": "Patterns that affect how the query optimizer chooses execution plans and how much I/O, CPU, and memory a query consumes.",
+      "rules": [
+        {
+          "id": "QO-001",
+          "title": "Use EXISTS instead of COUNT(*) for existence checks",
+          "description": "COUNT(*) can scan the entire matching set; EXISTS stops at the first match, which is faster for existence checks.",
+          "bad": "IF (SELECT COUNT(*) FROM table WHERE condition) > 0",
+          "good": "IF EXISTS (SELECT 1 FROM table WHERE condition)",
+          "detect_keywords": ["COUNT(*)", "IF (SELECT COUNT"],
+          "severity": "medium",
+          "impact": "medium"
+        },
+        {
+          "id": "QO-002",
+          "title": "Use SET NOCOUNT ON",
+          "description": "Prevents SQL Server from sending row-count messages to the client after each statement, reducing network round trips. Should be the first line of nearly every SP.",
+          "example": "CREATE PROCEDURE dbo.MyProc AS BEGIN SET NOCOUNT ON; ... END",
+          "always": true,
+          "detect_keywords": ["CREATE PROCEDURE", "ALTER PROCEDURE"],
+          "severity": "low",
+          "impact": "low"
+        },
+        {
+          "id": "QO-003",
+          "title": "Avoid SELECT *",
+          "description": "Always specify columns explicitly. Reduces I/O, memory, network traffic, and prevents breakage when table schema changes. Also enables covering indexes to actually cover the query.",
+          "bad": "SELECT * FROM Orders",
+          "good": "SELECT OrderId, CustomerId, OrderDate FROM Orders",
+          "detect_keywords": ["SELECT *", "SELECT TOP * FROM"],
+          "severity": "medium",
+          "impact": "medium"
+        },
+        {
+          "id": "QO-004",
+          "title": "Avoid functions on columns in WHERE clauses (non-SARGable predicates)",
+          "description": "Using functions like CONVERT, CAST, SUBSTRING, UPPER, ISNULL directly on a column in WHERE prevents the optimizer from using an index seek (forces a scan). Rewrite to keep the column 'bare'.",
+          "bad": "WHERE CONVERT(VARCHAR, date_column) = '2024-01-01'",
+          "good": "WHERE date_column >= '2024-01-01' AND date_column < '2024-01-02'",
+          "detect_keywords": [
+            "CONVERT(",
+            "CAST(",
+            "SUBSTRING(",
+            "WHERE UPPER(",
+            "WHERE ISNULL("
+          ],
+          "severity": "high",
+          "impact": "high"
+        },
+        {
+          "id": "QO-005",
+          "title": "Use WHERE instead of HAVING when possible",
+          "description": "HAVING filters rows after aggregation; WHERE filters before. Filtering earlier with WHERE reduces the rows that need to be aggregated.",
+          "bad": "SELECT CustomerId, COUNT(*) FROM Orders GROUP BY CustomerId HAVING CustomerId = 123",
+          "good": "SELECT CustomerId, COUNT(*) FROM Orders WHERE CustomerId = 123 GROUP BY CustomerId",
+          "detect_keywords": ["HAVING"],
+          "severity": "medium",
+          "impact": "medium"
+        },
+        {
+          "id": "QO-006",
+          "title": "Avoid implicit conversions between mismatched data types",
+          "description": "Comparing a VARCHAR column to an NVARCHAR literal (or INT to VARCHAR, etc.) causes implicit conversion, which can silently disable index usage. Match types in joins and predicates.",
+          "bad": "WHERE varchar_column = N'SomeValue' -- N prefix forces nvarchar comparison",
+          "good": "WHERE varchar_column = 'SomeValue'",
+          "detect_keywords": [
+            "implicit conversion",
+            "CONVERT_IMPLICIT",
+            "data type mismatch"
+          ],
+          "severity": "high",
+          "impact": "high"
+        },
+        {
+          "id": "QO-007",
+          "title": "Avoid leading wildcard LIKE searches",
+          "description": "LIKE '%value%' or LIKE '%value' cannot use a standard B-tree index seek and forces a scan. If full-text search is needed, use Full-Text Search indexes instead.",
+          "bad": "WHERE Name LIKE '%smith%'",
+          "good": "WHERE Name LIKE 'smith%' -- or use Full-Text Search for contains-type searches",
+          "detect_keywords": ["LIKE '%", "LIKE N'%"],
+          "severity": "medium",
+          "impact": "medium"
+        },
+        {
+          "id": "QO-008",
+          "title": "Use UNION ALL instead of UNION when duplicates are not a concern",
+          "description": "UNION performs an implicit DISTINCT, which requires a sort/hash to remove duplicates. UNION ALL skips this and is significantly faster when duplicates are acceptable or impossible.",
+          "bad": "SELECT a FROM t1 UNION SELECT a FROM t2",
+          "good": "SELECT a FROM t1 UNION ALL SELECT a FROM t2",
+          "detect_keywords": ["UNION ", "UNION SELECT"],
+          "severity": "medium",
+          "impact": "medium"
+        },
+        {
+          "id": "QO-009",
+          "title": "Filter early, join late on large tables",
+          "description": "Apply restrictive WHERE filters as early as possible (e.g. in a CTE or derived table) before joining to large tables, reducing the row count flowing into the join.",
+          "detect_keywords": ["JOIN", "large table", "derived table"],
+          "severity": "medium",
+          "impact": "medium"
+        },
+        {
+          "id": "QO-010",
+          "title": "Avoid DISTINCT as a band-aid for bad joins",
+          "description": "If DISTINCT is needed to remove duplicates produced by a join, the join condition is often incomplete or a one-to-many relationship is being mishandled. Fix the join logic instead of masking it with DISTINCT.",
+          "detect_keywords": ["SELECT DISTINCT", "DISTINCT"],
+          "severity": "medium",
+          "impact": "medium"
+        },
+        {
+          "id": "QO-011",
+          "title": "Use appropriate JOIN types and avoid unnecessary OUTER JOINs",
+          "description": "LEFT/RIGHT/FULL OUTER JOIN are more expensive than INNER JOIN and can block certain optimizations. Only use them when NULL-side rows are genuinely needed.",
+          "detect_keywords": ["LEFT JOIN", "RIGHT JOIN", "FULL OUTER JOIN"],
+          "severity": "low",
+          "impact": "low"
+        },
+        {
+          "id": "QO-012",
+          "title": "Batch large DML operations",
+          "description": "Large single-transaction UPDATE/DELETE/INSERT on millions of rows can cause lock escalation, large transaction log growth, and blocking. Batch into smaller chunks (e.g. 5,000-50,000 rows per batch).",
+          "example": "WHILE 1=1 BEGIN DELETE TOP (10000) FROM BigTable WHERE OldCondition; IF @@ROWCOUNT = 0 BREAK; END",
+          "detect_keywords": [
+            "DELETE FROM",
+            "UPDATE",
+            "millions of rows",
+            "large table"
+          ],
+          "severity": "high",
+          "impact": "high"
+        },
+        {
+          "id": "QO-013",
+          "title": "Avoid unnecessary ORDER BY",
+          "description": "Sorting has a CPU/memory cost. Only sort results when the consumer actually needs ordered output (e.g. not needed for existence checks, aggregations alone, or intermediate results).",
+          "detect_keywords": ["ORDER BY"],
+          "severity": "low",
+          "impact": "low"
+        },
+        {
+          "id": "QO-014",
+          "title": "Use window functions instead of self-joins or subqueries for running totals/ranking",
+          "description": "ROW_NUMBER(), RANK(), SUM() OVER(), LAG()/LEAD() are typically much faster than equivalent self-joins or correlated subqueries for ranking, running totals, and row-comparison logic.",
+          "bad": "Correlated subquery to compute running total per row",
+          "good": "SUM(Amount) OVER (PARTITION BY CustomerId ORDER BY OrderDate) AS RunningTotal",
+          "detect_keywords": [
+            "running total",
+            "self join",
+            "ROW_NUMBER",
+            "RANK",
+            "OVER ("
+          ],
+          "severity": "medium",
+          "impact": "high"
+        }
+      ]
+    },
+
+    "dynamic_sql": {
+      "title": "Dynamic SQL Best Practices",
+      "summary": "Dynamic SQL is sometimes necessary but introduces plan cache, security, and maintainability risks if used carelessly.",
+      "rules": [
+        {
+          "id": "DS-001",
+          "title": "Use sp_executesql instead of EXEC() with string concatenation",
+          "description": "sp_executesql allows parameterization, which prevents SQL injection and enables plan reuse across calls with different parameter values. EXEC() with concatenated strings creates a new plan every time.",
+          "bad": "EXEC('SELECT * FROM Orders WHERE CustomerId = ' + @customerId)",
+          "good": "EXEC sp_executesql N'SELECT OrderId FROM Orders WHERE CustomerId = @CustId', N'@CustId INT', @CustId = @customerId",
+          "detect_keywords": ["EXEC(", "EXEC (", "sp_executesql"],
+          "severity": "high",
+          "impact": "high"
+        },
+        {
+          "id": "DS-002",
+          "title": "Avoid dynamic SQL when a static query can achieve the same result",
+          "description": "Dynamic SQL prevents straightforward plan caching/reuse (unless parameterized correctly), complicates debugging, and increases SQL injection risk. Prefer IF/CASE branching with static queries, or optional parameters with COALESCE, when feasible.",
+          "detect_keywords": ["dynamic SQL", "EXEC(", "sp_executesql"],
+          "severity": "medium",
+          "impact": "medium"
+        },
+        {
+          "id": "DS-003",
+          "title": "Avoid 'kitchen sink' optional-parameter queries that defeat the optimizer",
+          "description": "A single static query using OR/COALESCE to handle many optional filter parameters often produces a poor, one-size-fits-all plan. Consider dynamic SQL with sp_executesql (built safely) or OPTION (RECOMPILE) for these specific cases, trading plan reuse for a plan tailored to the actual parameters supplied.",
+          "bad": "WHERE (@CustomerId IS NULL OR CustomerId = @CustomerId) AND (@Status IS NULL OR Status = @Status)",
+          "good": "Dynamic SQL building only the needed predicates, executed via sp_executesql; or OPTION (RECOMPILE) on the static query",
+          "detect_keywords": ["IS NULL OR", "optional parameter", "COALESCE(@"],
+          "severity": "medium",
+          "impact": "high"
+        },
+        {
+          "id": "DS-004",
+          "title": "Never concatenate user input directly even with sp_executesql for identifiers",
+          "description": "sp_executesql parameterizes values, not object identifiers (table/column names). If table/column names must be dynamic, validate against a whitelist and wrap with QUOTENAME.",
+          "detect_keywords": [
+            "dynamic table name",
+            "dynamic column name",
+            "QUOTENAME"
+          ],
+          "severity": "high",
+          "impact": "high"
+        }
+      ]
+    },
+
+    "loops_and_cursors": {
+      "title": "Loops and Cursors",
+      "summary": "Row-by-row processing is almost always slower than set-based operations in SQL Server. This is one of the most common and highest-impact anti-patterns to fix.",
+      "rules": [
+        {
+          "id": "LC-001",
+          "title": "Replace cursors with set-based operations",
+          "description": "Cursors process one row at a time with significant overhead per fetch. Use JOINs, CTEs, or window functions to express the same logic as a single set-based statement whenever possible.",
+          "bad": "DECLARE cur CURSOR FOR SELECT Id FROM Orders; OPEN cur; FETCH NEXT FROM cur INTO @Id; WHILE @@FETCH_STATUS = 0 BEGIN UPDATE Orders SET Status = 'X' WHERE Id = @Id; FETCH NEXT FROM cur INTO @Id; END",
+          "good": "UPDATE Orders SET Status = 'X' WHERE <condition>",
+          "detect_keywords": [
+            "DECLARE CURSOR",
+            "OPEN cur",
+            "FETCH NEXT",
+            "CURSOR FOR"
+          ],
+          "severity": "high",
+          "impact": "high"
+        },
+        {
+          "id": "LC-002",
+          "title": "Avoid WHILE loops for data processing",
+          "description": "WHILE loops iterating over rows to apply logic row-by-row are inefficient compared to set-based CTEs, JOINs, or CASE expressions covering all rows at once.",
+          "bad": "WHILE @i < @max BEGIN ... SET @i = @i + 1 END",
+          "good": "WITH CTE AS (...) UPDATE/SELECT ... -- single set-based statement",
+          "detect_keywords": ["WHILE @", "WHILE (", "WHILE EXISTS"],
+          "severity": "high",
+          "impact": "high"
+        },
+        {
+          "id": "LC-003",
+          "title": "If a cursor is unavoidable, use the fastest cursor options",
+          "description": "If row-by-row logic genuinely cannot be set-based (e.g. calling another SP per row with side effects), use LOCAL, FAST_FORWARD, READ_ONLY cursor options to minimize overhead.",
+          "example": "DECLARE cur CURSOR LOCAL FAST_FORWARD READ_ONLY FOR SELECT ...",
+          "detect_keywords": ["DECLARE CURSOR", "FAST_FORWARD"],
+          "severity": "low",
+          "impact": "medium"
+        },
+        {
+          "id": "LC-004",
+          "title": "Use table-valued parameters or batched UPDATE/MERGE instead of per-row procedure calls",
+          "description": "Calling a stored procedure once per row from application code or a loop is a major anti-pattern. Pass a table-valued parameter (TVP) and process all rows in one set-based call.",
+          "detect_keywords": ["per-row call", "table-valued parameter", "TVP"],
+          "severity": "high",
+          "impact": "high"
+        }
+      ]
+    },
+
+    "sql_injection": {
+      "title": "SQL Injection Prevention",
+      "summary": "Security practices that also frequently overlap with performance (parameterized queries enable plan reuse).",
+      "rules": [
+        {
+          "id": "SI-001",
+          "title": "Always use parameterized queries",
+          "description": "Never concatenate user input directly into SQL strings, whether in application code or dynamic SQL inside the SP.",
+          "bad": "SET @sql = 'SELECT * FROM T WHERE col = ''' + @userInput + ''''",
+          "good": "Use sp_executesql with parameters, e.g. EXEC sp_executesql @sql, N'@col VARCHAR(50)', @col = @userInput",
+          "detect_keywords": ["+ @userInput", "string concatenation", "' + @"],
+          "severity": "high",
+          "impact": "high"
+        },
+        {
+          "id": "SI-002",
+          "title": "Use QUOTENAME for dynamic object names",
+          "description": "When table/column/schema names must be built dynamically, always wrap them with QUOTENAME to prevent injection via identifier manipulation.",
+          "good": "SET @sql = N'SELECT * FROM ' + QUOTENAME(@schemaName) + N'.' + QUOTENAME(@tableName)",
+          "detect_keywords": ["dynamic table name", "QUOTENAME"],
+          "severity": "high",
+          "impact": "medium"
+        },
+        {
+          "id": "SI-003",
+          "title": "Validate dynamic identifiers against a whitelist",
+          "description": "Even with QUOTENAME, dynamic object names should be checked against an allowed list of known tables/columns before use, since QUOTENAME prevents syntax injection but not logical misuse.",
+          "detect_keywords": [
+            "whitelist",
+            "dynamic identifier",
+            "allowed tables"
+          ],
+          "severity": "medium",
+          "impact": "low"
+        },
+        {
+          "id": "SI-004",
+          "title": "Grant least-privilege permissions to SP execution context",
+          "description": "Stored procedures should run under accounts/roles with the minimum permissions needed (avoid db_owner or sysadmin for routine SPs). Consider EXECUTE AS for controlled privilege elevation instead of granting broad rights to callers.",
+          "detect_keywords": ["EXECUTE AS", "permissions", "db_owner"],
+          "severity": "medium",
+          "impact": "low"
+        }
+      ]
+    },
+
+    "performance": {
+      "title": "Performance Tips",
+      "summary": "General execution-plan and concurrency-related tips that affect throughput and locking behavior.",
+      "rules": [
+        {
+          "id": "PERF-001",
+          "title": "Be cautious with WITH (NOLOCK) for read-only queries",
+          "description": "NOLOCK (READ UNCOMMITTED) reduces blocking by skipping locks, but allows dirty reads, non-repeatable reads, and even skipped/duplicated rows during concurrent modifications. Prefer READ COMMITTED SNAPSHOT isolation at the database level over scattering NOLOCK hints, when consistency matters even slightly.",
+          "caution": "Can read uncommitted, possibly rolled-back data, or produce missing/duplicate rows during page splits. Use only where dirty reads are genuinely acceptable (e.g. rough dashboards).",
+          "detect_keywords": ["NOLOCK", "READ UNCOMMITTED"],
+          "severity": "medium",
+          "impact": "medium"
+        },
+        {
+          "id": "PERF-002",
+          "title": "Use TOP with ORDER BY for single-row retrieval",
+          "description": "When only one row is needed (e.g. 'the latest record'), SELECT TOP (1) ... ORDER BY lets the optimizer stop early, often via an index seek, instead of materializing a full result set.",
+          "good": "SELECT TOP (1) * FROM Orders WHERE CustomerId = @Id ORDER BY OrderDate DESC",
+          "detect_keywords": ["TOP 1", "TOP (1)", "single row"],
+          "severity": "low",
+          "impact": "medium"
+        },
+        {
+          "id": "PERF-003",
+          "title": "Avoid correlated subqueries; use JOINs or window functions",
+          "description": "Correlated subqueries execute once per outer row, which scales poorly. Rewrite using JOIN against a pre-aggregated derived table, or use window functions.",
+          "bad": "SELECT * FROM t1 WHERE column = (SELECT MAX(column) FROM t2 WHERE t2.id = t1.id)",
+          "good": "SELECT t1.*, t2.max_column FROM t1 JOIN (SELECT id, MAX(column) AS max_column FROM t2 GROUP BY id) t2 ON t1.id = t2.id",
+          "detect_keywords": ["correlated subquery", "WHERE column = (SELECT"],
+          "severity": "high",
+          "impact": "high"
+        },
+        {
+          "id": "PERF-004",
+          "title": "Avoid parameter sniffing problems with OPTION (RECOMPILE) or local variables strategically",
+          "description": "Parameter sniffing means the first call's parameter values shape the cached plan, which can be suboptimal for very different later calls (e.g. highly skewed data distributions). Mitigate with OPTION (RECOMPILE) for volatile queries, OPTIMIZE FOR hints, or by assigning parameters to local variables (use sparingly, as this disables sniffing entirely and can also hurt some queries).",
+          "detect_keywords": [
+            "parameter sniffing",
+            "OPTION (RECOMPILE)",
+            "OPTIMIZE FOR"
+          ],
+          "severity": "medium",
+          "impact": "high"
+        },
+        {
+          "id": "PERF-005",
+          "title": "Keep transactions as short as possible",
+          "description": "Long-running explicit transactions hold locks longer, increasing blocking and the risk of deadlocks. Do not include slow operations (e.g. external calls, large scans) inside a BEGIN TRAN/COMMIT block unless necessary.",
+          "detect_keywords": ["BEGIN TRAN", "BEGIN TRANSACTION", "COMMIT"],
+          "severity": "medium",
+          "impact": "medium"
+        },
+        {
+          "id": "PERF-006",
+          "title": "Choose appropriate isolation levels deliberately",
+          "description": "Default READ COMMITTED is usually right, but consider READ COMMITTED SNAPSHOT (RCSI) to reduce blocking via row versioning instead of NOLOCK hints, when higher consistency than NOLOCK is needed but blocking is a concern.",
+          "detect_keywords": [
+            "SET TRANSACTION ISOLATION LEVEL",
+            "RCSI",
+            "SNAPSHOT"
+          ],
+          "severity": "medium",
+          "impact": "medium"
+        },
+        {
+          "id": "PERF-007",
+          "title": "Avoid table variables for large row counts; prefer temp tables",
+          "description": "Table variables (@table) have historically had no statistics in older versions, leading to poor cardinality estimates with large data volumes (SQL Server 2019+ deferred compilation helps but temp tables (#table) generally still scale better and can be indexed explicitly).",
+          "bad": "DECLARE @BigResults TABLE (...) -- populated with 100k+ rows",
+          "good": "CREATE TABLE #BigResults (...) -- supports statistics and explicit indexes",
+          "detect_keywords": ["DECLARE @", "TABLE (", "table variable"],
+          "severity": "medium",
+          "impact": "medium"
+        },
+        {
+          "id": "PERF-008",
+          "title": "Use appropriate data types and avoid oversized columns",
+          "description": "Using NVARCHAR(MAX) or VARCHAR(MAX) when a fixed, smaller size suffices increases memory grants and can prevent certain optimizations. Size columns and variables to actual requirements.",
+          "detect_keywords": [
+            "NVARCHAR(MAX)",
+            "VARCHAR(MAX)",
+            "oversized column"
+          ],
+          "severity": "low",
+          "impact": "low"
+        },
+        {
+          "id": "PERF-009",
+          "title": "Avoid excessive recompilation",
+          "description": "Schema changes, statistics updates, and mixing DDL with DML in the same SP can trigger recompiles. Check sys.dm_exec_query_stats and plan_generation_num to detect frequent recompiles, and isolate DDL operations from hot-path query logic.",
+          "detect_keywords": ["recompile", "sp_recompile", "WITH RECOMPILE"],
+          "severity": "low",
+          "impact": "medium"
+        },
+        {
+          "id": "PERF-010",
+          "title": "Review actual execution plans, not just estimated plans",
+          "description": "Always validate optimization changes against the Actual Execution Plan (SET STATISTICS IO, TIME ON, or SSMS 'Include Actual Execution Plan') to confirm real row counts and I/O match expectations, not just the optimizer's estimates.",
+          "example": "SET STATISTICS IO ON; SET STATISTICS TIME ON;",
+          "detect_keywords": [
+            "execution plan",
+            "STATISTICS IO",
+            "STATISTICS TIME"
+          ],
+          "severity": "medium",
+          "impact": "high"
+        },
+        {
+          "id": "PERF-011",
+          "title": "Avoid scalar User-Defined Functions (UDFs) in WHERE/SELECT on large row sets",
+          "description": "Pre-2019 scalar UDFs execute row-by-row and block batch mode, devastating performance at scale. SQL Server 2019+ introduces Scalar UDF Inlining which mitigates this for eligible simple functions, but complex UDFs (with control flow, table access) are still not inlined. Prefer inline table-valued functions (iTVFs) or rewriting logic inline.",
+          "bad": "SELECT dbo.ComplexScalarFunction(column) FROM LargeTable",
+          "good": "Use an inline table-valued function (iTVF) or rewrite the logic as a set-based expression",
+          "detect_keywords": ["scalar function", "dbo.fn_", "CREATE FUNCTION"],
+          "severity": "high",
+          "impact": "high"
+        },
+        {
+          "id": "PERF-012",
+          "title": "Use MERGE cautiously",
+          "description": "MERGE can combine INSERT/UPDATE/DELETE logic but has had documented bugs around concurrency and locking in some versions, and execution plans can be harder to optimize than separate statements. Benchmark MERGE against equivalent separate INSERT/UPDATE statements for your specific case.",
+          "detect_keywords": ["MERGE INTO", "MERGE "],
+          "severity": "low",
+          "impact": "medium"
+        },
+        {
+          "id": "PERF-013",
+          "title": "Consider batch mode and columnstore for large analytical scans",
+          "description": "For SPs that aggregate over very large tables (data warehouse-style reporting), columnstore indexes and batch-mode execution (available even on rowstore in SQL Server 2019+ via 'Batch Mode on Rowstore') can dramatically outperform traditional row-mode plans.",
+          "detect_keywords": [
+            "columnstore",
+            "large aggregation",
+            "data warehouse",
+            "batch mode"
+          ],
+          "severity": "medium",
+          "impact": "high"
+        },
+        {
+          "id": "PERF-014",
+          "title": "Avoid wrapping the entire SP body in TRY/CATCH with broad rollback logic that masks performance issues",
+          "description": "Error handling is important, but extremely broad try/catch with retry loops can hide and amplify performance problems (e.g. retrying a deadlock-prone operation repeatedly). Address the root contention cause, and keep error-handling scope tight around the statements that actually need it.",
+          "detect_keywords": ["TRY", "CATCH", "retry logic"],
+          "severity": "low",
+          "impact": "low"
+        }
+      ]
+    },
+
+    "stored_procedure_design": {
+      "title": "Stored Procedure Design and Structure",
+      "summary": "Structural conventions that improve maintainability and indirectly performance (plan reuse, parameter handling).",
+      "rules": [
+        {
+          "id": "SPD-001",
+          "title": "Declare explicit parameter data types and sizes matching the underlying columns",
+          "description": "Mismatched parameter types/sizes vs. column types force implicit conversions, similar to QO-006, and can prevent index seeks.",
+          "detect_keywords": [
+            "CREATE PROCEDURE",
+            "@Param",
+            "parameter type mismatch"
+          ],
+          "severity": "medium",
+          "impact": "medium"
+        },
+        {
+          "id": "SPD-002",
+          "title": "Avoid prefixing stored procedure names with 'sp_'",
+          "description": "Names starting with 'sp_' make SQL Server check the master database first for a matching system procedure, adding a small but unnecessary lookup overhead, and risk colliding with system procedure names.",
+          "bad": "CREATE PROCEDURE sp_GetCustomerOrders",
+          "good": "CREATE PROCEDURE usp_GetCustomerOrders -- or any non sp_ prefix per naming convention",
+          "detect_keywords": ["CREATE PROCEDURE sp_"],
+          "severity": "low",
+          "impact": "low"
+        },
+        {
+          "id": "SPD-003",
+          "title": "Return result sets and status via OUTPUT parameters or return codes consistently",
+          "description": "Use OUTPUT parameters for scalar results and RETURN for status codes rather than relying on multiple ambiguous result sets, which simplifies caller logic and avoids unnecessary result set materialization.",
+          "detect_keywords": ["OUTPUT", "RETURN", "multiple result sets"],
+          "severity": "low",
+          "impact": "low"
+        },
+        {
+          "id": "SPD-004",
+          "title": "Avoid unnecessary use of temp tables when a CTE or derived table suffices",
+          "description": "Temp tables involve physical I/O against tempdb. For small intermediate sets or single-use logic, a CTE or derived table avoids that overhead, though temp tables remain preferable for large sets or when reuse/indexing of the intermediate result is needed (see PERF-007).",
+          "detect_keywords": ["CREATE TABLE #", "CTE", "derived table"],
+          "severity": "low",
+          "impact": "medium"
+        },
+        {
+          "id": "SPD-005",
+          "title": "Modularize complex logic but avoid excessive nested SP calls in hot paths",
+          "description": "Breaking logic into smaller SPs aids maintainability, but deeply nested SP-calling-SP chains in performance-critical paths add overhead and complicate plan analysis. Balance modularity against call-depth in hot paths.",
+          "detect_keywords": ["EXEC dbo.", "nested procedure calls"],
+          "severity": "low",
+          "impact": "low"
+        },
+        {
+          "id": "SPD-006",
+          "title": "Use proper error handling with TRY/CATCH and THROW",
+          "description": "Wrap risky DML in TRY/CATCH and use THROW (SQL Server 2012+) instead of RAISERROR for re-throwing, to preserve original error details and ensure transactions are rolled back appropriately on failure.",
+          "example": "BEGIN TRY ... END TRY BEGIN CATCH IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION; THROW; END CATCH",
+          "detect_keywords": ["TRY", "CATCH", "RAISERROR", "THROW"],
+          "severity": "medium",
+          "impact": "low"
+        }
+      ]
+    },
+
+    "system_procedures": {
+      "title": "System Procedures and Diagnostic Tools",
+      "summary": "Built-in tools for inspecting and maintaining database objects, useful both for diagnosis and for safe bulk maintenance operations.",
+      "rules": [
+        {
+          "id": "SP-001",
+          "title": "Use sp_msforeachtable for operations across all tables (with caution)",
+          "description": "sp_msforeachtable can simplify bulk maintenance (e.g. rebuilding all indexes), but it is an undocumented, unsupported system procedure subject to change. For production-critical automation, prefer documented alternatives (e.g. cursors over sys.tables, or Ola Hallengren's maintenance scripts) where reliability matters.",
+          "detect_keywords": ["sp_msforeachtable"],
+          "severity": "low",
+          "impact": "low"
+        },
+        {
+          "id": "SP-002",
+          "title": "Use sp_help / catalog views for quick object information",
+          "description": "sp_help provides column and index information for a table, but querying sys.columns, sys.indexes, and INFORMATION_SCHEMA views directly is more scriptable and reliable for tooling.",
+          "detect_keywords": [
+            "sp_help",
+            "INFORMATION_SCHEMA",
+            "sys.columns",
+            "sys.indexes"
+          ],
+          "severity": "low",
+          "impact": "low"
+        },
+        {
+          "id": "SP-003",
+          "title": "Use sys.dm_exec_query_stats and sys.dm_exec_procedure_stats to find expensive SPs",
+          "description": "These DMVs surface aggregate CPU, I/O, execution count, and duration per cached plan/procedure, making them the starting point for identifying which SPs are actually worth optimizing.",
+          "example": "SELECT TOP 20 * FROM sys.dm_exec_procedure_stats ORDER BY total_worker_time DESC",
+          "detect_keywords": [
+            "dm_exec_procedure_stats",
+            "dm_exec_query_stats",
+            "expensive query"
+          ],
+          "severity": "medium",
+          "impact": "high"
+        },
+        {
+          "id": "SP-004",
+          "title": "Use sp_whoisactive (third-party but ubiquitous) or sys.dm_exec_requests for live blocking/contention analysis",
+          "description": "When diagnosing live performance issues (blocking, long-running queries), Adam Machanic's sp_WhoIsActive or native sys.dm_exec_requests/sys.dm_os_waiting_tasks give real-time visibility into what is running and what is waiting.",
+          "detect_keywords": [
+            "sp_whoisactive",
+            "blocking",
+            "dm_exec_requests",
+            "dm_os_waiting_tasks"
+          ],
+          "severity": "low",
+          "impact": "medium"
+        },
+        {
+          "id": "SP-005",
+          "title": "Use Query Store for historical plan regression analysis",
+          "description": "SQL Server 2016+ Query Store (enabled per-database) tracks query plan history over time, making it possible to detect plan regressions after deployments and force a previous good plan if needed.",
+          "example": "ALTER DATABASE CURRENT SET QUERY_STORE = ON;",
+          "detect_keywords": ["Query Store", "plan regression", "force plan"],
+          "severity": "medium",
+          "impact": "high"
+        }
+      ]
+    }
+  },
+
+  "diagnostic_workflow": {
+    "title": "Suggested optimization workflow for an existing stored procedure",
+    "steps": [
+      "1. Capture the actual execution plan and SET STATISTICS IO, TIME ON output for a representative, realistic parameter set.",
+      "2. Identify the most expensive operators in the plan (scans on large tables, sorts, key lookups, spills to tempdb).",
+      "3. Check for missing/unused indexes via sys.dm_db_missing_index_details and sys.dm_db_index_usage_stats.",
+      "4. Scan the SP body for anti-patterns: cursors/WHILE loops, scalar UDFs, non-SARGable WHERE clauses, SELECT *, NOLOCK misuse, dynamic SQL without sp_executesql.",
+      "5. Check statistics freshness on tables involved (sys.dm_db_stats_properties).",
+      "6. Rewrite the riskiest anti-pattern first, re-measure with STATISTICS IO/TIME, and validate the new plan before moving to the next fix.",
+      "7. Re-test under realistic concurrency/parameter variability to rule out parameter-sniffing regressions."
+    ]
+  }
+}
